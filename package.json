@@ -4,7 +4,10 @@
   "description": "**AutomaNews** is a collaborative content platform focused on **home automation** and **smart home technologies**.   Inspired by [TabNews](https://www.tabnews.com.br/), the project brings together **news, tutorials, reviews, and community discussions** around the world of connected homes.",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run services:up && next dev",
+    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:stop": "docker compose -f infra/compose.yaml stop",
+    "services:down": "docker compose -f infra/compose.yaml down",
     "lint:check": "prettier --check .",
     "lint:fix": "prettier --write .",
     "test": "jest",
