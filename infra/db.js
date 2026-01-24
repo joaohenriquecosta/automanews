@@ -21,7 +21,10 @@ async function query(queryObject) {
     try {
       await client.connect();
     } catch (connectError) {
-      console.error("Infrastructure Error: Connection failed", connectError);
+      console.error(
+        "Infrastructure Error: Connection failed \n\n",
+        connectError,
+      );
       throw connectError; // Erro específico de conexão (ex: banco offline, credenciais erradas)
     }
 
