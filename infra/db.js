@@ -17,18 +17,22 @@ async function query(queryObject) {
     password: process.env.POSTGRES_PASSWORD,
   });
 
-  await client.connect();
-
   try {
-    // Execute the query passed by the Model
-    const result = await client.query(queryObject);
-    return result;
-  } catch (err) {
-    // Capture errors during query execution
-    console.error("Infrastructure Error: Query failed", err);
-    throw err;
+    try {
+      await client.connect();
+    } catch (connectError) {
+      console.error("Infrastructure Error: Connection failed", connectError);
+      throw connectError; // Erro específico de conexão (ex: banco offline, credenciais erradas)
+    }
+
+    try {
+      const result = await client.query(queryObject);
+      return result;
+    } catch (queryError) {
+      console.error("Infrastructure Error: Query execution failed", queryError);
+      throw queryError; // Erro específico de SQL (ex: erro de sintaxe, tabela não existe)
+    }
   } finally {
-    // Crucial: Always close the connection to prevent "Too many clients" errors
     await client.end();
   }
 }
