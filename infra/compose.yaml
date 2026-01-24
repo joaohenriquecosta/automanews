@@ -1,5 +1,23 @@
+# ==============================================================================
+# DOCKER OPERATIONAL GUIDE - automanews.com.br
+# ------------------------------------------------------------------------------
+# STATUS COMMANDS:
+# - Is Docker running?    -> docker info
+# - What is online?       -> docker ps
+# - What failed?          -> docker ps -a
+# - View logs/errors:     -> docker logs <container_name>
+# - CPU/RAM usage:        -> docker stats
+#
+# PROJECT SCRIPTS (package.json):
+# - npm run dev           -> Starts services and launches Next.js
+# - npm run services:up   -> Starts infrastructure only (database, etc.)
+# - npm run services:stop -> Pauses containers (preserves data/state)
+# - npm run services:down -> Removes containers and internal networks
+# ==============================================================================
+
 services:
   database:
+    container_name: local_postgres
     image: "postgres:16.0-alpine3.18"
     env_file:
       - ../.env.development
