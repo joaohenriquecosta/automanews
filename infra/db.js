@@ -10,32 +10,20 @@ async function query(queryObject) {
   // The Client automatically looks for PGPASSWORD, PGUSER, etc. in process.env
   // if no config object is passed, but explicit config is safer for Next.js.
   const client = new Client({
-    host: process.env.PGHOST,
-    port: process.env.PGPORT,
-    user: process.env.PGUSER,
-    database: process.env.PGDATABASE,
-    password: process.env.PGPASSWORD,
-    ssl: process.env.NODE_ENV === "development" ? false : true,
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl: process.env.NODE_ENV === "production",
   });
 
   try {
-    try {
-      await client.connect();
-    } catch (connectError) {
-      console.error(
-        "Infrastructure Error: Connection failed \n\n",
-        connectError,
-      );
-      throw connectError; // Erro específico de conexão (ex: banco offline, credenciais erradas)
-    }
-
-    try {
-      const result = await client.query(queryObject);
-      return result;
-    } catch (queryError) {
-      console.error("Infrastructure Error: Query execution failed", queryError);
-      throw queryError; // Erro específico de SQL (ex: erro de sintaxe, tabela não existe)
-    }
+    await client.connect();
+    return await client.query(queryObject);
+  } catch (error) {
+    console.error("Infrastructure Error:", error.message);
+    throw error;
   } finally {
     await client.end();
   }

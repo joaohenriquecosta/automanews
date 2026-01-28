@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npm run services:up && next dev",
-    "services:up": "docker compose -f infra/compose.yaml up -d",
+    "services:up": "docker compose -f infra/compose.yaml --env-file .env.development up -d",
     "services:stop": "docker compose -f infra/compose.yaml stop",
     "services:down": "docker compose -f infra/compose.yaml down",
     "lint:check": "prettier --check .",
@@ -42,6 +42,7 @@
     "url": "git+https://github.com/joaohenriquecosta/automanews.com.br.git"
   },
   "dependencies": {
+    "dotenv": "^16.4.4",
     "next": "^13.1.6",
     "node-pg-migrate": "^6.2.2",
     "pg": "^8.11.3",

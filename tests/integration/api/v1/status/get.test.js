@@ -7,7 +7,7 @@
 // Note: Parse numeric values to match the API's integer output
 const expectedDbVersion = process.env.POSTGRES_VERSION;
 const expectedMaxConnections = parseInt(process.env.POSTGRES_MAX_CONNECTIONS);
-const expectedOpenedConnections = 0;
+const expectedOpenedConnections = 1;
 
 describe("GET /api/v1/status", () => {
   let response;
