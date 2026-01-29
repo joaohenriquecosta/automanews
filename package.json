@@ -10,11 +10,11 @@
     "services:down": "docker compose -f infra/compose.yaml down",
     "lint:check": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "test": "dotenv -e .env.development -- jest",
-    "test:watch": "dotenv -e .env.development -- jest --watchAll",
-    "migration:create": "dotenv -e .env.development -- node-pg-migrate -m infra/migrations create",
-    "migration:up": "dotenv -e .env.development -- node-pg-migrate -m infra/migrations up",
-    "migration:down": "dotenv -e .env.development -- node-pg-migrate -m infra/migrations down"
+    "test": "jest --runInBand",
+    "test:watch": "jest --watchAll --runInBand",
+    "migration:create": "node-pg-migrate -m infra/migrations create",
+    "migration:up": "node-pg-migrate -m infra/migrations up",
+    "migration:down": "node-pg-migrate -m infra/migrations down"
   },
   "author": "joaohenriquecosta <joaohenrique_costa@icloud.com> (https://automanews.com.br)",
   "license": "MIT",

@@ -7,6 +7,20 @@
 import { Client } from "pg";
 
 async function query(queryObject) {
+  let client;
+
+  try {
+    client = await getNewClient();
+    return await client.query(queryObject);
+  } catch (error) {
+    console.error("Infrastructure Error:", error.message);
+    throw error;
+  } finally {
+    await client.end();
+  }
+}
+
+async function getNewClient() {
   // The Client automatically looks for PGPASSWORD, PGUSER, etc. in process.env
   // if no config object is passed, but explicit config is safer for Next.js.
   const client = new Client({
@@ -17,18 +31,11 @@ async function query(queryObject) {
     password: process.env.POSTGRES_PASSWORD,
     ssl: process.env.NODE_ENV === "production",
   });
-
-  try {
-    await client.connect();
-    return await client.query(queryObject);
-  } catch (error) {
-    console.error("Infrastructure Error:", error.message);
-    throw error;
-  } finally {
-    await client.end();
-  }
+  await client.connect();
+  return client;
 }
 
 export default {
-  query: query,
+  query,
+  getNewClient,
 };

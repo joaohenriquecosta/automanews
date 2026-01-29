@@ -4,7 +4,7 @@
  * In MVC, it receives the request, calls the Infrastructure Layer, and returns the View.
  */
 
-import db from "infra/db.js";
+import db from "infra/database.js";
 import util from "util";
 
 async function status(request, response) {
