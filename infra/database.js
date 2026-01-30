@@ -16,7 +16,9 @@ async function query(queryObject) {
     console.error("Infrastructure Error:", error.message);
     throw error;
   } finally {
-    await client.end();
+    if (client) {
+      await client.end();
+    }
   }
 }
 
