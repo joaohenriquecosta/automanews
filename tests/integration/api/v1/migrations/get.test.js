@@ -1,11 +1,10 @@
-import db from "infra/database.js";
 import orchestrator from "tests/orchestrator.js";
 
 describe("GET /api/v1/migrations", () => {
   describe("Anonymous user", () => {
     beforeAll(async () => {
       await orchestrator.waitForAllServices();
-      await db.query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
+      await orchestrator.clearDatabase();
     });
     test("Check migrations contents", async () => {
       const response = await fetch("http://localhost:3000/api/v1/migrations");

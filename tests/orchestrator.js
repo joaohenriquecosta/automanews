@@ -1,4 +1,5 @@
 import retry from "async-retry";
+import db from "infra/database.js";
 
 async function waitForAllServices() {
   return await waitForWebServer();
@@ -23,6 +24,10 @@ async function waitForAllServices() {
   }
 }
 
-const orchestrator = { waitForAllServices };
+async function clearDatabase() {
+  await db.query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
+}
+
+const orchestrator = { waitForAllServices, clearDatabase };
 
 export default orchestrator;
