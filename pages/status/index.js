@@ -7,7 +7,6 @@ async function fetchAPI(key) {
 }
 
 export default function StatusPage() {
-  // Configura o refresh global para a chave "/api/v1/status"
   useSWR("/api/v1/status", fetchAPI, {
     refreshInterval: 1000,
     dedupingInterval: 1000,
@@ -36,10 +35,8 @@ function UpdatedAt() {
 function DbStatus() {
   const { data, isLoading } = useSWR("/api/v1/status", fetchAPI);
 
-  // 1. SEMPRE verifique se os dados existem antes de tentar desestruturar
   if (isLoading || !data) return <div>Verificando banco...</div>;
 
-  // 2. Use o nome exato que você definiu no controller: "db"
   const { version, max_connections, opened_connections } = data.dependencies.db;
 
   return (
