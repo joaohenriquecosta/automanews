@@ -2,61 +2,42 @@
 
 **AutomaNews** is a collaborative content platform focused on **home automation** and **smart home technologies**.
 
-Inspired by [TabNews](tabnews.com.br), the project brings together news, tutorials, reviews, and community discussions around the world of smart homes.
+Inspired by [TabNews](https://www.tabnews.com.br/), the project brings together news, tutorials, reviews, and community discussions around the world of connected homes.
 
 ---
 
-## 🚀 Features
+## Features
 
-- 📢 Latest news on smart home and IoT
-- 📚 Tutorials and guides for beginners and advanced users
-- 🛠️ Product reviews and comparisons
-- 💬 Open community for sharing knowledge
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework:** Next.js
-- **Database:** PostgreSQL
-- **Containerization:** Docker
-- **Testing:** Jest
+- **News** — Latest updates on Smart Home, Matter, Zigbee, Z-Wave, and more
+- **Tutorials** — Step-by-step guides for beginners and advanced users
+- **Reviews** — Comparisons and analyses of devices, hubs, and assistants
+- **Community** — Open space for sharing experiences and knowledge
 
 ---
 
-## 💻 Development Setup
+## Tech Stack
 
-### 1. Prerequisites
+| Layer            | Technology                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| Framework        | [Next.js 14](https://nextjs.org/) (Pages Router)                                              |
+| Database         | [PostgreSQL 16](https://www.postgresql.org/)                                                  |
+| Containerization | [Docker](https://www.docker.com/)                                                             |
+| Migrations       | [node-pg-migrate](https://github.com/salsita/node-pg-migrate)                                 |
+| Testing          | [Jest](https://jestjs.io/)                                                                    |
+| Linting          | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)                              |
+| Commits          | [Commitizen](https://github.com/commitizen/cz-cli) + [Commitlint](https://commitlint.js.org/) |
 
-- Node.js (LTS)
-- Docker
+---
 
-### 2. Installation
+## Development Setup
 
-```bash
-git clone 'https://github.com/joaohenriquecosta/automanews.git'
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) LTS/Hydrogen (v18) — see `.nvmrc`
+- [Docker](https://www.docker.com/)
+
+### Installation
+
+git clone https://github.com/joaohenriquecosta/automanews.git
 cd automanews
 npm install
-```
-
-### 3.Run App
-
-```bash
-npm run dev
-```
-
----
-
-## 🧪 Testing
-
-To run the integration tests:
-
-```bash
-npm run test:watch
-```
-
----
-
-## 🤝 Contributing
-
-Feel free to open Issues or submit Pull Requests to improve the platform.
