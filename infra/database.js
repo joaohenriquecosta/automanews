@@ -13,12 +13,10 @@ async function query(queryObject) {
     client = await getNewClient();
     return await client.query(queryObject);
   } catch (error) {
-    console.error("Infrastructure Error:", error.message);
+    console.error(error);
     throw error;
   } finally {
-    if (client) {
-      await client.end();
-    }
+    await client?.end();
   }
 }
 
