@@ -6,10 +6,10 @@ This is a Next.js 14 (Pages Router) app backed by PostgreSQL 16 via Docker. The 
 
 ### Services
 
-| Service | How to start | Port |
-|---|---|---|
-| PostgreSQL | `docker compose -f infra/compose.yaml up -d` | 5432 |
-| Next.js dev | `npx next dev` | 3000 |
+| Service     | How to start                                 | Port |
+| ----------- | -------------------------------------------- | ---- |
+| PostgreSQL  | `docker compose -f infra/compose.yaml up -d` | 5432 |
+| Next.js dev | `npx next dev`                               | 3000 |
 
 ### Gotchas
 

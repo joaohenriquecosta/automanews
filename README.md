@@ -61,30 +61,30 @@ This single command handles the full startup sequence:
 
 ### Services
 
-| Service | Command | Port |
-|---|---|---|
+| Service    | Command                                      | Port |
+| ---------- | -------------------------------------------- | ---- |
 | PostgreSQL | `docker compose -f infra/compose.yaml up -d` | 5432 |
-| Next.js | `npx next dev` | 3000 |
+| Next.js    | `npx next dev`                               | 3000 |
 
 ---
 
 ## Available Scripts
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start all services and launch the dev server |
-| `npm test` | Run integration tests (starts services automatically) |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run lint:prettier:check` | Check code formatting with Prettier |
-| `npm run lint:prettier:fix` | Auto-fix formatting with Prettier |
-| `npm run lint:eslint:check` | Run ESLint checks |
-| `npm run services:up` | Start infrastructure containers only |
-| `npm run services:stop` | Pause containers (preserves data) |
-| `npm run services:down` | Remove containers and networks |
-| `npm run migrations:up` | Run pending database migrations |
-| `npm run migrations:down` | Rollback the last migration |
-| `npm run migrations:create` | Create a new migration file |
-| `npm run commit` | Create a commit using Commitizen |
+| Script                        | Description                                           |
+| ----------------------------- | ----------------------------------------------------- |
+| `npm run dev`                 | Start all services and launch the dev server          |
+| `npm test`                    | Run integration tests (starts services automatically) |
+| `npm run test:watch`          | Run tests in watch mode                               |
+| `npm run lint:prettier:check` | Check code formatting with Prettier                   |
+| `npm run lint:prettier:fix`   | Auto-fix formatting with Prettier                     |
+| `npm run lint:eslint:check`   | Run ESLint checks                                     |
+| `npm run services:up`         | Start infrastructure containers only                  |
+| `npm run services:stop`       | Pause containers (preserves data)                     |
+| `npm run services:down`       | Remove containers and networks                        |
+| `npm run migrations:up`       | Run pending database migrations                       |
+| `npm run migrations:down`     | Rollback the last migration                           |
+| `npm run migrations:create`   | Create a new migration file                           |
+| `npm run commit`              | Create a commit using Commitizen                      |
 
 ---
 
@@ -138,11 +138,11 @@ npm run test:watch
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/v1/status` | Returns system health and database info |
-| GET | `/api/v1/migrations` | Lists pending migrations (dry run) |
-| POST | `/api/v1/migrations` | Executes pending migrations |
+| Method | Endpoint             | Description                             |
+| ------ | -------------------- | --------------------------------------- |
+| GET    | `/api/v1/status`     | Returns system health and database info |
+| GET    | `/api/v1/migrations` | Lists pending migrations (dry run)      |
+| POST   | `/api/v1/migrations` | Executes pending migrations             |
 
 ---
 
