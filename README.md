@@ -17,15 +17,15 @@ Inspired by [TabNews](https://www.tabnews.com.br/), the project brings together 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 14](https://nextjs.org/) (Pages Router) |
-| Database | [PostgreSQL 16](https://www.postgresql.org/) |
-| Containerization | [Docker](https://www.docker.com/) |
-| Migrations | [node-pg-migrate](https://github.com/salsita/node-pg-migrate) |
-| Testing | [Jest](https://jestjs.io/) |
-| Linting | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) |
-| Commits | [Commitizen](https://github.com/commitizen/cz-cli) + [Commitlint](https://commitlint.js.org/) |
+| Layer            | Technology                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| Framework        | [Next.js 14](https://nextjs.org/) (Pages Router)                                              |
+| Database         | [PostgreSQL 16](https://www.postgresql.org/)                                                  |
+| Containerization | [Docker](https://www.docker.com/)                                                             |
+| Migrations       | [node-pg-migrate](https://github.com/salsita/node-pg-migrate)                                 |
+| Testing          | [Jest](https://jestjs.io/)                                                                    |
+| Linting          | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)                              |
+| Commits          | [Commitizen](https://github.com/commitizen/cz-cli) + [Commitlint](https://commitlint.js.org/) |
 
 ---
 
