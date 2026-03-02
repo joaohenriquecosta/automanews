@@ -28,6 +28,4 @@ async function clearDatabase() {
   await db.query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
 }
 
-const orchestrator = { waitForAllServices, clearDatabase };
-
-export default orchestrator;
+export { waitForAllServices, clearDatabase };

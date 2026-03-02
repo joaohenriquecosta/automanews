@@ -1,4 +1,4 @@
-import orchestrator from "tests/orchestrator.js";
+import { waitForAllServices } from "tests/orchestrator.js";
 
 // Parse numeric values to match the API's integer output
 const expectedDbVersion = process.env.POSTGRES_VERSION;
@@ -12,7 +12,7 @@ describe("GET /api/v1/status", () => {
 
     // Fetches data once before running the individual test assertions
     beforeAll(async () => {
-      await orchestrator.waitForAllServices();
+      await waitForAllServices();
       response = await fetch("http://localhost:3000/api/v1/status");
       responseBody = await response.json();
     });
