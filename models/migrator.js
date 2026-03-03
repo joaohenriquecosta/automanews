@@ -9,6 +9,7 @@ function defaultMigrationsOptions(dbClient, overrides = {}) {
     verbose: true,
     direction: "up",
     dbClient,
+    log: () => {},
     migrationsTable: "pgmigrations",
     dir: resolve("infra", "migrations"),
     ...overrides,
