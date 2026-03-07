@@ -1,3 +1,13 @@
+function toErrorJson(error, extra = {}) {
+  return {
+    name: error.name,
+    status_code: error.statusCode,
+    message: error.message,
+    action: error.action,
+    ...extra,
+  };
+}
+
 export class InternalServerError extends Error {
   constructor({ cause, statusCode }) {
     super("Um erro interno do servidor ocorreu.", { cause });
@@ -7,13 +17,7 @@ export class InternalServerError extends Error {
   }
 
   toJSON() {
-    return {
-      name: this.name,
-      status_code: this.statusCode,
-      message: this.message,
-      action: this.action,
-      cause: this.cause.toJSON(),
-    };
+    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -26,12 +30,7 @@ export class MethodNotAllowedError extends Error {
   }
 
   toJSON() {
-    return {
-      name: this.name,
-      status_code: this.statusCode,
-      message: this.message,
-      action: this.action,
-    };
+    return toErrorJson(this);
   }
 }
 
@@ -44,12 +43,7 @@ export class ServiceError extends Error {
   }
 
   toJSON() {
-    return {
-      name: this.name,
-      status_code: this.statusCode,
-      message: this.message,
-      action: this.action,
-    };
+    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -62,11 +56,21 @@ export class ValidationError extends Error {
   }
 
   toJSON() {
-    return {
-      name: this.name,
-      status_code: this.statusCode,
-      message: this.message,
-      action: this.action,
-    };
+    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Recurso não encontrado.", { cause });
+    this.name = "NotFoundError";
+    this.action =
+      action ||
+      "Verifique se o recurso existe e se os parâmetros fornecidos são válidos.";
+    this.statusCode = 404;
+  }
+
+  toJSON() {
+    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
   }
 }
