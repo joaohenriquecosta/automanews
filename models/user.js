@@ -1,4 +1,4 @@
-import db from "infra/database";
+import { query } from "infra/database";
 import { ValidationError, NotFoundError } from "infra/errors";
 
 async function createUser(userInputValues) {
@@ -8,7 +8,7 @@ async function createUser(userInputValues) {
   return newUser;
 
   async function validateUniqueUsername(username) {
-    const result = await db.query({
+    const result = await query({
       text: `
         SELECT
           *
@@ -29,7 +29,7 @@ async function createUser(userInputValues) {
   }
 
   async function validateUniqueEmail(email) {
-    const result = await db.query({
+    const result = await query({
       text: `
         SELECT
           *
@@ -49,7 +49,7 @@ async function createUser(userInputValues) {
   }
 
   async function runInsertUserQuery(user) {
-    const result = await db.query({
+    const result = await query({
       text: `
         INSERT INTO
           users (username, email, password)
@@ -76,7 +76,7 @@ async function getUserByUsername(username) {
   return foundUser;
 
   async function runSelectUserQuery(username) {
-    const result = await db.query({
+    const result = await query({
       text: `
         SELECT
           *

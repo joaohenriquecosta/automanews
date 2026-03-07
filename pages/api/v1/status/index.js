@@ -1,4 +1,4 @@
-import db from "infra/database";
+import { query } from "infra/database";
 import { exceptionHandlers } from "infra/controller";
 import { createRouter } from "next-connect";
 
@@ -13,16 +13,16 @@ export default router.handler({
 async function getHandler(request, response) {
   const updatedAt = new Date().toISOString();
 
-  const dbVersionResult = await db.query("SHOW server_version;");
+  const dbVersionResult = await query("SHOW server_version;");
   const dbVersionValue = dbVersionResult.rows[0].server_version;
 
-  const dbMaxConnectionsResult = await db.query("SHOW max_connections;");
+  const dbMaxConnectionsResult = await query("SHOW max_connections;");
   const dbMaxConnectionsValue = parseInt(
     dbMaxConnectionsResult.rows[0].max_connections,
   );
 
   const dbName = process.env.POSTGRES_DB;
-  const dbOpenedConnectionsResult = await db.query({
+  const dbOpenedConnectionsResult = await query({
     text: `SELECT COUNT(*) AS opened_connections FROM pg_stat_activity WHERE datname = $1;`,
     values: [dbName],
   });

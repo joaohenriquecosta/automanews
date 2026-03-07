@@ -1,5 +1,5 @@
 import retry from "async-retry";
-import db from "infra/database.js";
+import { query } from "infra/database";
 
 async function waitForAllServices() {
   return await waitForWebServer();
@@ -25,7 +25,7 @@ async function waitForAllServices() {
 }
 
 async function clearDatabase() {
-  await db.query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
+  await query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
 }
 
 async function createDummyUser() {
@@ -35,7 +35,7 @@ async function createDummyUser() {
     password: "dummy_password",
   };
 
-  const queryResult = await db.query({
+  const queryResult = await query({
     text: `
       INSERT INTO
         users (username, email, password)
