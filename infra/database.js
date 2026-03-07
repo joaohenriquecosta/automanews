@@ -47,6 +47,7 @@ async function getNewClient() {
     ssl: process.env.NODE_ENV === "production",
   });
   await client.connect();
+  await client.query("SET timezone = 'UTC'");
   return client;
 }
 
