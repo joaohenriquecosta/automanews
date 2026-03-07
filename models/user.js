@@ -1,5 +1,5 @@
 import db from "infra/database";
-import { ValidationError } from "infra/errors";
+import { ValidationError, NotFoundError } from "infra/errors";
 
 async function createUser(userInputValues) {
   await validateUniqueUsername(userInputValues.username);
@@ -64,4 +64,32 @@ async function createUser(userInputValues) {
   }
 }
 
-export { createUser };
+async function getUserByUsername(username) {
+  const foundUser = await runSelectUserQuery(username);
+  if (!foundUser) {
+    throw new NotFoundError({
+      cause: new Error(`User ${username} not found`),
+      message: `Usuário ${username} não encontrado.`,
+      action: `Verifique se o usuário ${username} existe.`,
+    });
+  }
+  return foundUser;
+
+  async function runSelectUserQuery(username) {
+    const result = await db.query({
+      text: `
+        SELECT
+          *
+        FROM
+          users
+        WHERE
+          LOWER(username) = LOWER($1)
+        LIMIT 1
+        ;`,
+      values: [username],
+    });
+    return result.rows[0] ?? null;
+  }
+}
+
+export { createUser, getUserByUsername };
