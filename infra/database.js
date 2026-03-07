@@ -12,11 +12,21 @@ async function query(queryObject) {
 
   try {
     client = await getNewClient();
+  } catch (error) {
+    const publicError = new ServiceError({
+      cause: error,
+      message: "Erro na conexão com o Banco de Dados.",
+    });
+    console.error(publicError);
+    throw publicError;
+  }
+
+  try {
     return await client.query(queryObject);
   } catch (error) {
     const publicError = new ServiceError({
       cause: error,
-      message: "Erro na Query ou na conexão com o Banco de Dados.",
+      message: "Erro na Query ao Banco de Dados.",
     });
     console.error(publicError);
     throw publicError;
@@ -37,12 +47,8 @@ async function getNewClient() {
     ssl: process.env.NODE_ENV === "production",
   });
   await client.connect();
+  await client.query("SET timezone = 'UTC'");
   return client;
 }
 
-const db = {
-  query,
-  getNewClient,
-};
-
-export default db;
+export { query, getNewClient };

@@ -1,6 +1,6 @@
 import { exceptionHandlers } from "infra/controller";
 import { createRouter } from "next-connect";
-import { getSystemStatus } from "models/status";
+import { getUserByUsername } from "models/user";
 
 const router = createRouter();
 
@@ -11,6 +11,7 @@ export default router.handler({
 });
 
 async function getHandler(request, response) {
-  const dbStatus = await getSystemStatus();
-  return response.status(200).json(dbStatus);
+  const { username } = request.query;
+  const user = await getUserByUsername(username);
+  return response.status(200).json(user);
 }
