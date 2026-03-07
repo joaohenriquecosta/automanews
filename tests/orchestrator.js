@@ -28,4 +28,34 @@ async function clearDatabase() {
   await db.query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
 }
 
-export { waitForAllServices, clearDatabase };
+async function createDummyUser() {
+  const dummyUserInfo = {
+    username: "dummy_user",
+    email: "dummy_email@test.dev",
+    password: "dummy_password",
+  };
+
+  const queryResult = await db.query({
+    text: `
+      INSERT INTO
+        users (username, email, password)
+      VALUES
+        ($1, $2, $3)
+      RETURNING
+        *
+    ;`,
+    values: [
+      dummyUserInfo.username,
+      dummyUserInfo.email,
+      dummyUserInfo.password,
+    ],
+  });
+
+  return {
+    ...queryResult.rows[0],
+    created_at: new Date(queryResult.rows[0].created_at).toISOString(),
+    updated_at: new Date(queryResult.rows[0].updated_at).toISOString(),
+  };
+}
+
+export { waitForAllServices, clearDatabase, createDummyUser };
