@@ -2,9 +2,12 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  postUser,
+  getUser,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
+import { comparePassword } from "models/password";
 
 beforeAll(async () => {
   await waitForAllServices();
@@ -14,23 +17,6 @@ beforeEach(async () => {
   await clearDatabase();
   await runPendingMigrations();
 });
-
-async function postUser(userInput) {
-  const response = await fetch("http://localhost:3000/api/v1/users", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(userInput),
-  });
-
-  const responseBody = await response.json();
-
-  return {
-    response,
-    responseBody,
-  };
-}
 
 describe("POST /api/v1/users", () => {
   describe("Anonymous user", () => {
@@ -44,19 +30,27 @@ describe("POST /api/v1/users", () => {
         const { response, responseBody } = await postUser(userInput);
 
         expect(response.status).toBe(201);
-        expect(responseBody).toEqual({
-          id: responseBody.id,
-          username: userInput.username,
-          email: userInput.email,
-          password: responseBody.password,
-          created_at: responseBody.created_at,
-          updated_at: responseBody.updated_at,
-        });
+        expect(responseBody.password).not.toBe(userInput.password);
 
         expect(uuidValidate(responseBody.id)).toBe(true);
         expect(uuidVersion(responseBody.id)).toBe(4);
         expect(Date.parse(responseBody.created_at)).not.toBeNaN();
         expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+
+        const registeredUser = await getUser(userInput.username);
+        expect(registeredUser.password).toBe(responseBody.password);
+
+        const isPasswordValid = await comparePassword(
+          userInput.password,
+          registeredUser.password,
+        );
+        expect(isPasswordValid).toBe(true);
+
+        const isIncorrectPasswordValid = await comparePassword(
+          "invalid_password",
+          registeredUser.password,
+        );
+        expect(isIncorrectPasswordValid).toBe(false);
       });
     });
     describe("With duplicated field", () => {
