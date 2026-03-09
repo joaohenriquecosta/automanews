@@ -1,5 +1,6 @@
 import retry from "async-retry";
 import { query } from "infra/database";
+import { createUser } from "models/user";
 
 async function waitForAllServices() {
   return await waitForWebServer();
@@ -28,33 +29,20 @@ async function clearDatabase() {
   await query("DROP SCHEMA PUBLIC CASCADE; CREATE SCHEMA PUBLIC;");
 }
 
-async function createDummyUser() {
+async function createDummyUser(overrides = {}) {
   const dummyUserInfo = {
     username: "dummy_user",
     email: "dummy_email@test.dev",
     password: "dummy_password",
+    ...overrides,
   };
 
-  const queryResult = await query({
-    text: `
-      INSERT INTO
-        users (username, email, password)
-      VALUES
-        ($1, $2, $3)
-      RETURNING
-        *
-    ;`,
-    values: [
-      dummyUserInfo.username,
-      dummyUserInfo.email,
-      dummyUserInfo.password,
-    ],
-  });
+  const dummyUser = await createUser(dummyUserInfo);
 
   return {
-    ...queryResult.rows[0],
-    created_at: new Date(queryResult.rows[0].created_at).toISOString(),
-    updated_at: new Date(queryResult.rows[0].updated_at).toISOString(),
+    ...dummyUser,
+    created_at: new Date(dummyUser.created_at).toISOString(),
+    updated_at: new Date(dummyUser.updated_at).toISOString(),
   };
 }
 
