@@ -2,7 +2,12 @@ const { execFileSync, spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
-const runnerPath = path.join(projectRoot, "infra", "scripts", "run-next-watch-server.js");
+const runnerPath = path.join(
+  projectRoot,
+  "infra",
+  "scripts",
+  "run-next-watch-server.js",
+);
 
 switch (process.platform) {
   case "darwin":
