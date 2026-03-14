@@ -2,7 +2,7 @@ import { query } from "infra/database";
 import { ValidationError, NotFoundError } from "infra/errors";
 import { hashObjectPassword } from "models/password";
 
-export { createUser, getUserByUsername };
+export { createUser, getUserByUsername, updateUser };
 
 /* ── Public API ────────────────────────────────────── */
 
@@ -23,6 +23,61 @@ async function getUserByUsername(username) {
     });
   }
   return user;
+}
+
+async function updateUser(username, userInputValues) {
+  const allowedFields = ["username", "email", "password"];
+
+  if (Object.keys(userInputValues).length === 0) {
+    throw new ValidationError({
+      message: "Nenhum campo foi enviado para atualização do usuário.",
+      action: `Envie pelo menos um dos campos permitidos para atualização: ${allowedFields.join(", ")}.`,
+    });
+  }
+
+  for (const inputField of Object.keys(userInputValues)) {
+    if (!allowedFields.includes(inputField)) {
+      throw new ValidationError({
+        message: `O campo ${inputField} não é permitido para atualização do usuário.`,
+        action: `Envie somente campos permitidos para atualização: ${allowedFields.join(", ")}.`,
+      });
+    }
+  }
+
+  const currentUser = await getUserByUsername(username);
+
+  if (
+    "username" in userInputValues &&
+    username.toLowerCase() !== userInputValues.username.toLowerCase()
+  ) {
+    await validateUniqueUsername(userInputValues.username);
+  }
+
+  if (
+    "email" in userInputValues &&
+    currentUser.email.toLowerCase() !== userInputValues.email.toLowerCase()
+  ) {
+    await validateUniqueEmail(userInputValues.email);
+  }
+
+  const fieldsToUpdate =
+    "password" in userInputValues
+      ? await hashObjectPassword(userInputValues)
+      : userInputValues;
+
+  const setClauses = [];
+  const values = [];
+  let paramIndex = 1;
+
+  for (const field of allowedFields) {
+    if (field in fieldsToUpdate) {
+      setClauses.push(`${field} = $${paramIndex}`);
+      values.push(fieldsToUpdate[field]);
+      paramIndex++;
+    }
+  }
+
+  return await updateUserQuery(username, setClauses.join(", "), values);
 }
 
 /* ── Validation ────────────────────────────────────── */
@@ -95,6 +150,24 @@ async function insertUserQuery(user) {
         *
     ;`,
     values: [user.username, user.email, user.password],
+  });
+  return result.rows[0];
+}
+
+async function updateUserQuery(username, setClauses, values) {
+  const result = await query({
+    text: `
+      UPDATE
+        users
+      SET
+        ${setClauses},
+        updated_at = timezone('utc', now())
+      WHERE
+        LOWER(username) = LOWER($${values.length + 1})
+      RETURNING
+        *
+    ;`,
+    values: [...values, username],
   });
   return result.rows[0];
 }
