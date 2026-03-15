@@ -1,7 +1,7 @@
 const fs = require("node:fs");
-const path = require("node:path");
+const { getNextWatchPidFilePath } = require("./next-watch-pid");
 
-const pidFile = path.resolve(__dirname, "..", "..", ".next-test-watch.pid");
+const pidFile = getNextWatchPidFilePath();
 
 if (!fs.existsSync(pidFile)) {
   process.exit(0);
