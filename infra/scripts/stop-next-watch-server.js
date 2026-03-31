@@ -1,5 +1,5 @@
 const fs = require("node:fs");
-const { getNextWatchPidFilePath } = require("./next-watch-pid");
+const { getNextWatchPidFilePath } = require("./next-watch-pid.js");
 
 const pidFile = getNextWatchPidFilePath();
 

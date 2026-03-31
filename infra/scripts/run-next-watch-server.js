@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
-const { getNextWatchPidFilePath } = require("./next-watch-pid");
+const { getNextWatchPidFilePath } = require("./next-watch-pid.js");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
 const pidFile = getNextWatchPidFilePath();

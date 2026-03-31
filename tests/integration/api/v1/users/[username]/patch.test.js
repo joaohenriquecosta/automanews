@@ -4,7 +4,7 @@ import {
   createDummyUser,
   getUser,
 } from "tests/orchestrator.js";
-import { runPendingMigrations } from "models/migrator";
+import { runPendingMigrations } from "models/migrator.js";
 import { comparePassword } from "models/password";
 
 beforeAll(async () => {

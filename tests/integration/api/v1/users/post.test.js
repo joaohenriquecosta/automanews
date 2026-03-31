@@ -5,7 +5,7 @@ import {
   postUser,
   getUser,
 } from "tests/orchestrator.js";
-import { runPendingMigrations } from "models/migrator";
+import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
 import { comparePassword } from "models/password";
 

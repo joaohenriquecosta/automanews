@@ -1,5 +1,5 @@
-import { query } from "infra/database";
-import { ValidationError, NotFoundError } from "infra/errors";
+import { query } from "infra/database.js";
+import { ValidationError, NotFoundError } from "infra/errors.js";
 import { hashObjectPassword } from "models/password";
 
 export { createUser, getUserByUsername, updateUser };

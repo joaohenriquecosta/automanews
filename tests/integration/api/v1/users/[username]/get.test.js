@@ -3,7 +3,7 @@ import {
   clearDatabase,
   createDummyUser,
 } from "tests/orchestrator.js";
-import { runPendingMigrations } from "models/migrator";
+import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
 
 beforeAll(async () => {

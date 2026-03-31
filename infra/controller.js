@@ -4,7 +4,7 @@ import {
   ServiceError,
   ValidationError,
   NotFoundError,
-} from "infra/errors";
+} from "infra/errors.js";
 
 const PUBLIC_ERRORS = [
   ValidationError,

@@ -1,6 +1,6 @@
-import { exceptionHandlers } from "infra/controller";
+import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
-import { getSystemStatus } from "models/status";
+import { getSystemStatus } from "models/status.js";
 
 const router = createRouter();
 

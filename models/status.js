@@ -1,5 +1,5 @@
-import { query } from "infra/database";
-import { ServiceError } from "infra/errors";
+import { query } from "infra/database.js";
+import { ServiceError } from "infra/errors.js";
 
 async function getSystemStatus() {
   const updatedAt = new Date().toISOString();
