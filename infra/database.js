@@ -1,9 +1,3 @@
-/*
- * INFRASTRUCTURE LAYER: Database Client
- * This module follows the official 'node-postgres' one-shot client pattern.
- * In MVC, this provides the interface between Models and the PostgreSQL driver.
- */
-
 import { Client } from "pg";
 import { ServiceError } from "infra/errors";
 
