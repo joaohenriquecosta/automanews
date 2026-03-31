@@ -1,6 +1,4 @@
-// pages/index.js
-
-function Home() {
+export default function Home() {
   return (
     <>
       <div className="page">
@@ -295,5 +293,3 @@ function Home() {
     </>
   );
 }
-
-export default Home; // <- obrigatório no Pages Router

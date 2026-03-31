@@ -2,6 +2,14 @@ import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
 
+export {
+  waitForAllServices,
+  clearDatabase,
+  createDummyUser,
+  postUser,
+  getUser,
+};
+
 async function waitForAllServices() {
   return await waitForWebServer();
 
@@ -70,11 +78,3 @@ async function getUser(username) {
   const user = await getUserByUsername(username);
   return serializeUser(user);
 }
-
-export {
-  waitForAllServices,
-  clearDatabase,
-  createDummyUser,
-  postUser,
-  getUser,
-};

@@ -1,6 +1,8 @@
 import { Client } from "pg";
 import { ServiceError } from "infra/errors.js";
 
+export { query, getNewClient };
+
 async function query(queryObject) {
   let client;
 
@@ -44,5 +46,3 @@ async function getNewClient() {
   await client.query("SET timezone = 'UTC'");
   return client;
 }
-
-export { query, getNewClient };

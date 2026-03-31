@@ -1,6 +1,8 @@
 import { query } from "infra/database.js";
 import { ServiceError } from "infra/errors.js";
 
+export { getSystemStatus };
+
 async function getSystemStatus() {
   const updatedAt = new Date().toISOString();
   const dbVersionValue = await getDbVersion();
@@ -53,5 +55,3 @@ async function getDbOpenedConnections() {
   });
   return parseInt(dbOpenedConnectionsResult.rows[0].opened_connections);
 }
-
-export { getSystemStatus };

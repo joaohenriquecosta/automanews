@@ -13,6 +13,8 @@ const PUBLIC_ERRORS = [
   NotFoundError,
 ];
 
+export { exceptionHandlers };
+
 function onNoMatchHandler(request, response) {
   const publicError = new MethodNotAllowedError();
   return response.status(publicError.statusCode).json(publicError);
@@ -37,5 +39,3 @@ const exceptionHandlers = {
   onNoMatch: onNoMatchHandler,
   onError: onErrorHandler,
 };
-
-export { exceptionHandlers };

@@ -13,6 +13,10 @@ main().catch((error) => {
   process.exit(1);
 });
 
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("exit", cleanup);
+
 async function main() {
   process.chdir(projectRoot);
   fs.rmSync(pidFile, { force: true });
@@ -63,7 +67,3 @@ function getNpmCommand() {
 function getNpxCommand() {
   return process.platform === "win32" ? "npx.cmd" : "npx";
 }
-
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
-process.on("exit", cleanup);

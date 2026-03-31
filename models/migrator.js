@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { getNewClient } from "infra/database.js";
 import { ServiceError } from "infra/errors.js";
 
+export { listPendingMigrations, runPendingMigrations };
+
 function defaultMigrationsOptions(dbClient, overrides = {}) {
   return {
     dryRun: true,
@@ -55,5 +57,3 @@ async function runPendingMigrations() {
     await dbClient?.end();
   }
 }
-
-export { listPendingMigrations, runPendingMigrations };
