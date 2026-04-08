@@ -1,3 +1,4 @@
+/* global Promise */
 /**
  * Waits until `next dev` serves JSON from the API routes integration tests use.
  * `wait-on` against /api/v1/status alone is not enough: Next compiles other routes

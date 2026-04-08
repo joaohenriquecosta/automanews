@@ -3,8 +3,7 @@ import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
 
 /** Use 127.0.0.1 so probes match `wait-for-next-dev.js` and avoid IPv6/localhost quirks on Linux. */
-export const testBaseUrl =
-  process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
+export const testBaseUrl = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
 
 export {
   waitForAllServices,

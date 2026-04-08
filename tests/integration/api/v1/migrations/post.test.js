@@ -13,12 +13,9 @@ describe("POST /api/v1/migrations", () => {
   describe("Anonymous user", () => {
     describe("Running pending migrations", () => {
       test("All migrations are run successfully and returned the correct data", async () => {
-        const response1 = await fetch(
-          `${testBaseUrl}/api/v1/migrations`,
-          {
-            method: "POST",
-          },
-        );
+        const response1 = await fetch(`${testBaseUrl}/api/v1/migrations`, {
+          method: "POST",
+        });
 
         expect(response1.status).toBe(201);
 
@@ -28,12 +25,9 @@ describe("POST /api/v1/migrations", () => {
         expect(response1Body.length).toBeGreaterThan(0);
       });
       test("No more migrations to run", async () => {
-        const response2 = await fetch(
-          `${testBaseUrl}/api/v1/migrations`,
-          {
-            method: "POST",
-          },
-        );
+        const response2 = await fetch(`${testBaseUrl}/api/v1/migrations`, {
+          method: "POST",
+        });
 
         expect(response2.status).toBe(200);
 

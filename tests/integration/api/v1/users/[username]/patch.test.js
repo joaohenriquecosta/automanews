@@ -18,16 +18,13 @@ beforeEach(async () => {
 });
 
 async function patchUser(username, userInputValues) {
-  const response = await fetch(
-    `${testBaseUrl}/api/v1/users/${username}`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userInputValues),
+  const response = await fetch(`${testBaseUrl}/api/v1/users/${username}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(userInputValues),
+  });
 
   const responseBody = await response.json();
 

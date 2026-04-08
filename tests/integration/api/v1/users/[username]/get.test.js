@@ -25,9 +25,7 @@ describe("GET /api/v1/users/[username]", () => {
       test("'dummy_user' is retrieved successfully and returned the correct data", async () => {
         const { username } = dummyUser;
 
-        const response = await fetch(
-          `${testBaseUrl}/api/v1/users/${username}`,
-        );
+        const response = await fetch(`${testBaseUrl}/api/v1/users/${username}`);
 
         const responseBody = await response.json();
 

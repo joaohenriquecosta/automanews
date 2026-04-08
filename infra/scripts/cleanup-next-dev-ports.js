@@ -1,3 +1,4 @@
+/* global Set */
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
