@@ -14,7 +14,8 @@ async function createUser(userInputValues) {
 }
 
 function serializePublicUser(databaseUser) {
-  const { password, ...publicUser } = databaseUser;
+  const publicUser = { ...databaseUser };
+  delete publicUser.password;
   return publicUser;
 }
 

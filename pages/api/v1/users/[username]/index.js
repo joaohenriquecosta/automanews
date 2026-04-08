@@ -1,6 +1,10 @@
 import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
-import { getUserByUsername, updateUser, serializePublicUser } from "models/user.js";
+import {
+  getUserByUsername,
+  updateUser,
+  serializePublicUser,
+} from "models/user.js";
 
 const router = createRouter();
 
