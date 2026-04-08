@@ -1,4 +1,8 @@
-import { waitForAllServices, clearDatabase } from "tests/orchestrator.js";
+import {
+  waitForAllServices,
+  clearDatabase,
+  testBaseUrl,
+} from "tests/orchestrator.js";
 
 beforeAll(async () => {
   await waitForAllServices();
@@ -10,7 +14,7 @@ describe("POST /api/v1/migrations", () => {
     describe("Running pending migrations", () => {
       test("All migrations are run successfully and returned the correct data", async () => {
         const response1 = await fetch(
-          "http://localhost:3000/api/v1/migrations",
+          `${testBaseUrl}/api/v1/migrations`,
           {
             method: "POST",
           },
@@ -25,7 +29,7 @@ describe("POST /api/v1/migrations", () => {
       });
       test("No more migrations to run", async () => {
         const response2 = await fetch(
-          "http://localhost:3000/api/v1/migrations",
+          `${testBaseUrl}/api/v1/migrations`,
           {
             method: "POST",
           },

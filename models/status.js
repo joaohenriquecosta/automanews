@@ -9,7 +9,13 @@ async function getSystemStatus() {
   const dbMaxConnectionsValue = await getDbMaxConnections();
   const dbOpenedConnectionsValue = await getDbOpenedConnections();
 
-  if (!dbVersionValue || !dbMaxConnectionsValue || !dbOpenedConnectionsValue) {
+  if (
+    !dbVersionValue ||
+    dbMaxConnectionsValue == null ||
+    Number.isNaN(dbMaxConnectionsValue) ||
+    dbOpenedConnectionsValue == null ||
+    Number.isNaN(dbOpenedConnectionsValue)
+  ) {
     throw new ServiceError({
       cause: new Error("Failed to get database status."),
       message: "Não foi possível obter o status do banco de dados.",

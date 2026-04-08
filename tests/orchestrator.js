@@ -2,6 +2,10 @@ import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
 
+/** Use 127.0.0.1 so probes match `wait-for-next-dev.js` and avoid IPv6/localhost quirks on Linux. */
+export const testBaseUrl =
+  process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
+
 export {
   waitForAllServices,
   clearDatabase,
@@ -10,24 +14,31 @@ export {
   getUser,
 };
 
+function isJsonResponse(response) {
+  const ct = response.headers.get("content-type") || "";
+  return ct.includes("application/json");
+}
+
 async function waitForAllServices() {
   return await waitForWebServer();
 
   async function waitForWebServer() {
-    return retry(fetchStatusPage, {
-      retries: 10,
-      maxTimeout: 1000,
+    return retry(assertStatusJsonOk, {
+      retries: 30,
+      maxTimeout: 1500,
       onRetry: (error, attempt) => {
         console.log(
-          `Attempt ${attempt} failed to fetch status page. Error: ${error.message}`,
+          `Attempt ${attempt} failed waiting for Next.js API. Error: ${error.message}`,
         );
       },
     });
 
-    async function fetchStatusPage() {
-      const response = await fetch("http://localhost:3000/api/v1/status");
-      if (response.status !== 200) {
-        throw new Error(`Expected status 200 but received ${response.status}`);
+    async function assertStatusJsonOk() {
+      const statusRes = await fetch(`${testBaseUrl}/api/v1/status`);
+      if (statusRes.status !== 200 || !isJsonResponse(statusRes)) {
+        throw new Error(
+          `status: want 200+json, got ${statusRes.status} content-type=${statusRes.headers.get("content-type")}`,
+        );
       }
     }
   }
@@ -58,7 +69,7 @@ async function createDummyUser(overrides = {}) {
 }
 
 async function postUser(userInput) {
-  const response = await fetch("http://localhost:3000/api/v1/users", {
+  const response = await fetch(`${testBaseUrl}/api/v1/users`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

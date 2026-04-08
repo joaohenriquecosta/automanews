@@ -3,6 +3,7 @@ import {
   clearDatabase,
   createDummyUser,
   getUser,
+  testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { comparePassword } from "models/password";
@@ -18,7 +19,7 @@ beforeEach(async () => {
 
 async function patchUser(username, userInputValues) {
   const response = await fetch(
-    `http://localhost:3000/api/v1/users/${username}`,
+    `${testBaseUrl}/api/v1/users/${username}`,
     {
       method: "PATCH",
       headers: {

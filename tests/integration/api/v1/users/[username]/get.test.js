@@ -2,6 +2,7 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
@@ -25,7 +26,7 @@ describe("GET /api/v1/users/[username]", () => {
         const { username } = dummyUser;
 
         const response = await fetch(
-          `http://localhost:3000/api/v1/users/${username}`,
+          `${testBaseUrl}/api/v1/users/${username}`,
         );
 
         const responseBody = await response.json();
@@ -41,7 +42,7 @@ describe("GET /api/v1/users/[username]", () => {
       test("'DUMMY_USER' is retrieved successfully and returned the correct data", async () => {
         const uppercaseUsername = dummyUser.username.toUpperCase();
         const response = await fetch(
-          `http://localhost:3000/api/v1/users/${uppercaseUsername}`,
+          `${testBaseUrl}/api/v1/users/${uppercaseUsername}`,
         );
 
         const responseBody = await response.json();
@@ -57,7 +58,7 @@ describe("GET /api/v1/users/[username]", () => {
       test("'non_existent_user' returns 404 Not Found", async () => {
         const nonExistentUsername = "non_existent_user";
         const response = await fetch(
-          `http://localhost:3000/api/v1/users/${nonExistentUsername}`,
+          `${testBaseUrl}/api/v1/users/${nonExistentUsername}`,
         );
 
         expect(response.status).toBe(404);

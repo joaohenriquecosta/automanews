@@ -1,4 +1,5 @@
-const { execFileSync, spawnSync } = require("node:child_process");
+const fs = require("node:fs");
+const { execFileSync, spawn, spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
@@ -76,6 +77,11 @@ function openOnWindows() {
 }
 
 function openOnLinux() {
+  if (isWsl()) {
+    spawnDetachedRunner();
+    return;
+  }
+
   const command = buildPosixCommand();
   const escapedCommand = escapeSingleQuotes(command);
   const terminalLaunchers = [
@@ -98,6 +104,24 @@ function openOnLinux() {
   throw new Error(
     "No supported Linux terminal emulator found. Tried gnome-terminal, konsole, xfce4-terminal, x-terminal-emulator, and xterm.",
   );
+}
+
+function isWsl() {
+  try {
+    const version = fs.readFileSync("/proc/version", "utf8").toLowerCase();
+    return version.includes("microsoft") || version.includes("wsl");
+  } catch {
+    return false;
+  }
+}
+
+function spawnDetachedRunner() {
+  const child = spawn(process.execPath, [runnerPath], {
+    cwd: projectRoot,
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
 }
 
 function buildPosixCommand() {

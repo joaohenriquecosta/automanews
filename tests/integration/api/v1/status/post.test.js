@@ -1,4 +1,4 @@
-import { waitForAllServices } from "tests/orchestrator.js";
+import { waitForAllServices, testBaseUrl } from "tests/orchestrator.js";
 
 describe("POST /api/v1/status", () => {
   describe("Anonymous user", () => {
@@ -7,7 +7,7 @@ describe("POST /api/v1/status", () => {
     // Fetches data once before running the individual test assertions
     beforeAll(async () => {
       await waitForAllServices();
-      response = await fetch("http://localhost:3000/api/v1/status", {
+      response = await fetch(`${testBaseUrl}/api/v1/status`, {
         method: "POST",
       });
     });

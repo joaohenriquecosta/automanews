@@ -1,4 +1,8 @@
-import { waitForAllServices, clearDatabase } from "tests/orchestrator.js";
+import {
+  waitForAllServices,
+  clearDatabase,
+  testBaseUrl,
+} from "tests/orchestrator.js";
 
 describe("GET /api/v1/migrations", () => {
   describe("Anonymous user", () => {
@@ -7,7 +11,7 @@ describe("GET /api/v1/migrations", () => {
       await clearDatabase();
     });
     test("Check migrations contents", async () => {
-      const response = await fetch("http://localhost:3000/api/v1/migrations");
+      const response = await fetch(`${testBaseUrl}/api/v1/migrations`);
 
       expect(response.status).toBe(200);
 

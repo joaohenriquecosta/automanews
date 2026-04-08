@@ -1,6 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
+const { cleanupNextDevPorts } = require("./cleanup-next-dev-ports.js");
 const { getNextWatchPidFilePath } = require("./next-watch-pid.js");
 
 const projectRoot = path.resolve(__dirname, "..", "..");
@@ -20,14 +21,19 @@ process.on("exit", cleanup);
 async function main() {
   process.chdir(projectRoot);
   fs.rmSync(pidFile, { force: true });
+  cleanupNextDevPorts();
 
   runNpmScript("services:wait:db");
   runNpmScript("migrations:up");
 
-  nextProcess = spawn(getNpxCommand(), ["next", "dev"], {
-    cwd: projectRoot,
-    stdio: "inherit",
-  });
+  nextProcess = spawn(
+    getNpxCommand(),
+    ["next", "dev", "--hostname", "127.0.0.1", "--port", "3000"],
+    {
+      cwd: projectRoot,
+      stdio: "inherit",
+    },
+  );
 
   fs.writeFileSync(pidFile, String(nextProcess.pid));
 
