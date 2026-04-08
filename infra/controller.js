@@ -4,7 +4,7 @@ import {
   ServiceError,
   ValidationError,
   NotFoundError,
-} from "infra/errors";
+} from "infra/errors.js";
 
 const PUBLIC_ERRORS = [
   ValidationError,
@@ -12,6 +12,8 @@ const PUBLIC_ERRORS = [
   MethodNotAllowedError,
   NotFoundError,
 ];
+
+export { exceptionHandlers };
 
 function onNoMatchHandler(request, response) {
   const publicError = new MethodNotAllowedError();
@@ -37,5 +39,3 @@ const exceptionHandlers = {
   onNoMatch: onNoMatchHandler,
   onError: onErrorHandler,
 };
-
-export { exceptionHandlers };

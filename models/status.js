@@ -1,5 +1,7 @@
-import { query } from "infra/database";
-import { ServiceError } from "infra/errors";
+import { query } from "infra/database.js";
+import { ServiceError } from "infra/errors.js";
+
+export { getSystemStatus };
 
 async function getSystemStatus() {
   const updatedAt = new Date().toISOString();
@@ -7,7 +9,13 @@ async function getSystemStatus() {
   const dbMaxConnectionsValue = await getDbMaxConnections();
   const dbOpenedConnectionsValue = await getDbOpenedConnections();
 
-  if (!dbVersionValue || !dbMaxConnectionsValue || !dbOpenedConnectionsValue) {
+  if (
+    !dbVersionValue ||
+    dbMaxConnectionsValue == null ||
+    Number.isNaN(dbMaxConnectionsValue) ||
+    dbOpenedConnectionsValue == null ||
+    Number.isNaN(dbOpenedConnectionsValue)
+  ) {
     throw new ServiceError({
       cause: new Error("Failed to get database status."),
       message: "Não foi possível obter o status do banco de dados.",
@@ -53,5 +61,3 @@ async function getDbOpenedConnections() {
   });
   return parseInt(dbOpenedConnectionsResult.rows[0].opened_connections);
 }
-
-export { getSystemStatus };

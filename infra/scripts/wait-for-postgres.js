@@ -1,5 +1,8 @@
 const { exec } = require("node:child_process");
 
+console.log("\n\n⭕ Aguardando Postgres aceitar conexões...\n");
+checkPostgres();
+
 function checkPostgres() {
   exec(
     "docker exec local_postgres pg_isready --host localhost",
@@ -14,6 +17,3 @@ function checkPostgres() {
     },
   );
 }
-
-console.log("\n\n⭕ Aguardando Postgres aceitar conexões...\n");
-checkPostgres();

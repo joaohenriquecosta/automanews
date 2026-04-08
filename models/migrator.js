@@ -1,7 +1,9 @@
 import migrationRunner from "node-pg-migrate";
 import { resolve } from "node:path";
-import { getNewClient } from "infra/database";
-import { ServiceError } from "infra/errors";
+import { getNewClient } from "infra/database.js";
+import { ServiceError } from "infra/errors.js";
+
+export { listPendingMigrations, runPendingMigrations };
 
 function defaultMigrationsOptions(dbClient, overrides = {}) {
   return {
@@ -55,5 +57,3 @@ async function runPendingMigrations() {
     await dbClient?.end();
   }
 }
-
-export { listPendingMigrations, runPendingMigrations };

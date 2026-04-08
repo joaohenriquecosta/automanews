@@ -1,5 +1,8 @@
-import { listPendingMigrations, runPendingMigrations } from "models/migrator";
-import { exceptionHandlers } from "infra/controller";
+import {
+  listPendingMigrations,
+  runPendingMigrations,
+} from "models/migrator.js";
+import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
 
 const router = createRouter();

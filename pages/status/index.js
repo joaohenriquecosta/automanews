@@ -1,31 +1,6 @@
 import useSWR from "swr";
 import { useState, useEffect } from "react";
 
-async function fetchAPI(key) {
-  const response = await fetch(key);
-  const responseBody = await response.json();
-  return responseBody;
-}
-
-function useTheme() {
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("status-theme");
-    if (saved === "dark") setDark(true);
-  }, []);
-
-  function toggle() {
-    setDark((prev) => {
-      const next = !prev;
-      localStorage.setItem("status-theme", next ? "dark" : "light");
-      return next;
-    });
-  }
-
-  return { dark, toggle };
-}
-
 export default function StatusPage() {
   const { dark, toggle } = useTheme();
 
@@ -147,6 +122,12 @@ export default function StatusPage() {
   );
 }
 
+async function fetchAPI(key) {
+  const response = await fetch(key);
+  const responseBody = await response.json();
+  return responseBody;
+}
+
 function UpdatedAt() {
   const { data, isLoading } = useSWR("/api/v1/status", fetchAPI);
 
@@ -180,4 +161,23 @@ function DbStatus() {
       </ul>
     </div>
   );
+}
+
+function useTheme() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("status-theme");
+    if (saved === "dark") setDark(true);
+  }, []);
+
+  function toggle() {
+    setDark((prev) => {
+      const next = !prev;
+      localStorage.setItem("status-theme", next ? "dark" : "light");
+      return next;
+    });
+  }
+
+  return { dark, toggle };
 }
