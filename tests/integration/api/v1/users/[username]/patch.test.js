@@ -63,12 +63,13 @@ describe("PATCH /api/v1/users/[username]", () => {
         const userInDatabase = await getUser(validUserInputValues.username);
 
         expect(responseBody).toEqual({
-          ...userInDatabase,
+          id: userInDatabase.id,
           username: validUserInputValues.username,
           email: validUserInputValues.email,
-          password: userInDatabase.password,
+          created_at: userInDatabase.created_at,
+          updated_at: userInDatabase.updated_at,
         });
-        expect(responseBody.password).not.toBe(validUserInputValues.password);
+        expect(responseBody.password).toBeUndefined();
       });
 
       test("The updated password is hashed and valid", async () => {

@@ -2,7 +2,7 @@ import { query } from "infra/database.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
 import { hashObjectPassword } from "models/password";
 
-export { createUser, getUserByUsername, updateUser };
+export { createUser, getUserByUsername, updateUser, serializePublicUser };
 
 /* ── Public API ────────────────────────────────────── */
 
@@ -11,6 +11,11 @@ async function createUser(userInputValues) {
   await validateUniqueEmail(userInputValues.email);
   const secureInput = await hashObjectPassword(userInputValues);
   return await insertUserQuery(secureInput);
+}
+
+function serializePublicUser(databaseUser) {
+  const { password, ...publicUser } = databaseUser;
+  return publicUser;
 }
 
 async function getUserByUsername(username) {
