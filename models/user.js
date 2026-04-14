@@ -2,7 +2,13 @@ import { query } from "infra/database.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
 import { hashObjectPassword } from "models/password";
 
-export { createUser, getUserByUsername, updateUser, serializePublicUser };
+export {
+  createUser,
+  getUserByUsername,
+  getUserByEmail,
+  updateUser,
+  serializePublicUser,
+};
 
 /* ── Public API ────────────────────────────────────── */
 
@@ -26,6 +32,18 @@ async function getUserByUsername(username) {
       cause: new Error(`User ${username} not found`),
       message: `Usuário ${username} não encontrado.`,
       action: `Verifique se o usuário ${username} existe.`,
+    });
+  }
+  return user;
+}
+
+async function getUserByEmail(email) {
+  const user = await findUserByEmailQuery(email);
+  if (!user) {
+    throw new NotFoundError({
+      cause: new Error(`User ${email} not found`),
+      message: `Usuário ${email} não encontrado.`,
+      action: `Verifique se o usuário com email ${email} existe.`,
     });
   }
   return user;
