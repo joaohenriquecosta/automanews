@@ -10,6 +10,7 @@ export {
   clearDatabase,
   createDummyUser,
   postUser,
+  postSession,
   getUser,
 };
 
@@ -74,6 +75,23 @@ async function postUser(userInput) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userInput),
+  });
+
+  const responseBody = await response.json();
+
+  return {
+    response,
+    responseBody,
+  };
+}
+
+async function postSession(credentials) {
+  const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(credentials),
   });
 
   const responseBody = await response.json();

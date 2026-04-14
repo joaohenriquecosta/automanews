@@ -1,0 +1,12 @@
+{
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "PostgreSQL",
+      "name": "local automanews",
+      "connectString": "postgresql://local_user:local_password@localhost:5432/local_db"
+    }
+  ]
+}
