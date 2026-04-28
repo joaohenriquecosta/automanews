@@ -76,7 +76,7 @@ describe("DELETE /api/v1/sessions", () => {
 
       expect(doubleCheckResponse.status).toBe(401);
       expect(doubleCheckResponse.headers.get("Set-Cookie")).toBe(
-        "session_id=invalid; Max-Age=-1; Path=/; HttpOnly",
+        "session_id=invalid; Max-Age=-1; Path=/; HttpOnly; SameSite=Lax",
       );
     });
   });
