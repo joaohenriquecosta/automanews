@@ -30,7 +30,7 @@ describe("POST /api/v1/users", () => {
         const { response, responseBody } = await postUser(userInput);
 
         expect(response.status).toBe(201);
-        expect(responseBody.password).not.toBe(userInput.password);
+        expect(responseBody.password).toBeUndefined();
 
         expect(uuidValidate(responseBody.id)).toBe(true);
         expect(uuidVersion(responseBody.id)).toBe(4);
@@ -38,7 +38,7 @@ describe("POST /api/v1/users", () => {
         expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
 
         const registeredUser = await getUser(userInput.username);
-        expect(registeredUser.password).toBe(responseBody.password);
+        expect(registeredUser.password).toBeDefined();
 
         const isPasswordValid = await comparePassword(
           userInput.password,

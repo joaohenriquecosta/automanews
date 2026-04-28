@@ -33,7 +33,14 @@ describe("GET /api/v1/users/[username]", () => {
 
         expect(uuidValidate(responseBody.id)).toBe(true);
         expect(uuidVersion(responseBody.id)).toBe(4);
-        expect(responseBody).toEqual(dummyUser);
+        expect(responseBody).toEqual({
+          id: dummyUser.id,
+          username: dummyUser.username,
+          email: dummyUser.email,
+          created_at: dummyUser.created_at,
+          updated_at: dummyUser.updated_at,
+        });
+        expect(responseBody.password).toBeUndefined();
       });
     });
     describe("With case mismatch", () => {
@@ -49,7 +56,14 @@ describe("GET /api/v1/users/[username]", () => {
 
         expect(uuidValidate(responseBody.id)).toBe(true);
         expect(uuidVersion(responseBody.id)).toBe(4);
-        expect(responseBody).toEqual(dummyUser);
+        expect(responseBody).toEqual({
+          id: dummyUser.id,
+          username: dummyUser.username,
+          email: dummyUser.email,
+          created_at: dummyUser.created_at,
+          updated_at: dummyUser.updated_at,
+        });
+        expect(responseBody.password).toBeUndefined();
       });
     });
     describe("With non-existent username", () => {

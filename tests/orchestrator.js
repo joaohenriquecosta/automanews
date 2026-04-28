@@ -9,7 +9,10 @@ export {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  serializeUser,
+  serializePublicUser,
   postUser,
+  postSession,
   getUser,
 };
 
@@ -55,6 +58,12 @@ function serializeUser(user) {
   };
 }
 
+function serializePublicUser(user) {
+  const serialized = serializeUser(user);
+  delete serialized.password;
+  return serialized;
+}
+
 async function createDummyUser(overrides = {}) {
   const dummyUserInfo = {
     username: "dummy_user",
@@ -64,7 +73,7 @@ async function createDummyUser(overrides = {}) {
   };
 
   const dummyUser = await createUser(dummyUserInfo);
-  return serializeUser(dummyUser);
+  return serializePublicUser(dummyUser);
 }
 
 async function postUser(userInput) {
@@ -74,6 +83,23 @@ async function postUser(userInput) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(userInput),
+  });
+
+  const responseBody = await response.json();
+
+  return {
+    response,
+    responseBody,
+  };
+}
+
+async function postSession(credentials) {
+  const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(credentials),
   });
 
   const responseBody = await response.json();

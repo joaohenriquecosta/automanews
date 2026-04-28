@@ -8,7 +8,7 @@ function toErrorJson(error, extra = {}) {
   };
 }
 
-export class InternalServerError extends Error {
+class InternalServerError extends Error {
   constructor({ cause, statusCode }) {
     super("Um erro interno do servidor ocorreu.", { cause });
     this.name = "InternalServerError";
@@ -21,7 +21,7 @@ export class InternalServerError extends Error {
   }
 }
 
-export class MethodNotAllowedError extends Error {
+class MethodNotAllowedError extends Error {
   constructor() {
     super("Método não permitido.");
     this.name = "MethodNotAllowedError";
@@ -34,7 +34,7 @@ export class MethodNotAllowedError extends Error {
   }
 }
 
-export class ServiceError extends Error {
+class ServiceError extends Error {
   constructor({ cause, message }) {
     super(message || "Ocorreu um erro ao executar o serviço.", { cause });
     this.name = "ServiceError";
@@ -47,7 +47,7 @@ export class ServiceError extends Error {
   }
 }
 
-export class ValidationError extends Error {
+class ValidationError extends Error {
   constructor({ cause, message, action }) {
     super(message || "Ocorreu um erro de validação.", { cause });
     this.name = "ValidationError";
@@ -60,7 +60,7 @@ export class ValidationError extends Error {
   }
 }
 
-export class NotFoundError extends Error {
+class NotFoundError extends Error {
   constructor({ cause, message, action }) {
     super(message || "Recurso não encontrado.", { cause });
     this.name = "NotFoundError";
@@ -74,3 +74,27 @@ export class NotFoundError extends Error {
     return toErrorJson(this, { cause: this.cause?.toJSON?.() });
   }
 }
+
+class AuthenticationError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Erro de autenticação.", { cause });
+    this.name = "AuthenticationError";
+    this.action =
+      action || "Verifique se o email e a senha fornecidos são válidos.";
+    this.statusCode = 401;
+  }
+
+  /** Omit `cause` so nested NotFoundError etc. is never sent to clients (anti-enumeration). */
+  toJSON() {
+    return toErrorJson(this);
+  }
+}
+
+export {
+  InternalServerError,
+  MethodNotAllowedError,
+  ServiceError,
+  ValidationError,
+  NotFoundError,
+  AuthenticationError,
+};
