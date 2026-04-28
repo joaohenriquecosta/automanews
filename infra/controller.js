@@ -47,22 +47,24 @@ function onErrorHandler(error, request, response) {
   return response.status(fallbackError.statusCode).json(fallbackError);
 }
 
-async function setSessionCookie(sessionToken, response) {
+function setSessionCookie(sessionToken, response) {
   const setCookieValue = serializeCookie("session_id", sessionToken, {
     path: "/",
     maxAge: SESSION_LIFETIME_MS / 1000,
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
+    sameSite: "lax",
   });
   response.setHeader("Set-Cookie", setCookieValue);
 }
 
-async function clearSessionCookie(response) {
+function clearSessionCookie(response) {
   const setCookieValue = serializeCookie("session_id", "invalid", {
     path: "/",
     maxAge: -1,
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
+    sameSite: "lax",
   });
   response.setHeader("Set-Cookie", setCookieValue);
 }

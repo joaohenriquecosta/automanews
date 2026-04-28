@@ -43,27 +43,25 @@ async function refreshSession(sessionId) {
 }
 
 async function expireSessionById(sessionId) {
-  const expiredSession = await expireSessionByIdQuery(sessionId);
+  return await expireSessionByIdQuery(sessionId);
+}
 
-  async function expireSessionByIdQuery(sessionId) {
-    const result = await query({
-      text: `
-        UPDATE
-          sessions
-        SET
-          expires_at = expires_at - INTERVAL '1 year',
-          updated_at = NOW()
-        WHERE
-          id = $1
-        RETURNING
-          *
-      ;`,
-      values: [sessionId],
-    });
-    return result.rows[0] ?? null;
-  }
-
-  return expiredSession;
+async function expireSessionByIdQuery(sessionId) {
+  const result = await query({
+    text: `
+      UPDATE
+        sessions
+      SET
+        expires_at = expires_at - INTERVAL '1 year',
+        updated_at = NOW()
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [sessionId],
+  });
+  return result.rows[0] ?? null;
 }
 
 async function insertSessionQuery({ token, userId, expiresAt }) {
