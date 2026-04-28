@@ -6,8 +6,10 @@ import {
   ServiceError,
   ValidationError,
 } from "infra/errors.js";
+import { serialize as serializeCookie } from "cookie";
+import { SESSION_LIFETIME_MS } from "models/session.js";
 
-export { exceptionHandlers };
+export { exceptionHandlers, setSessionCookie, clearSessionCookie };
 
 const exceptionHandlers = {
   onNoMatch: onNoMatchHandler,
@@ -20,15 +22,19 @@ function onNoMatchHandler(request, response) {
 }
 
 function onErrorHandler(error, request, response) {
-  const KNOWN_ERRORS = [
+  const COMMON_ERRORS = [
     ValidationError,
     ServiceError,
     MethodNotAllowedError,
     NotFoundError,
-    AuthenticationError,
   ];
 
-  for (const errorType of KNOWN_ERRORS) {
+  if (error instanceof AuthenticationError) {
+    clearSessionCookie(response);
+    return response.status(error.statusCode).json(error);
+  }
+
+  for (const errorType of COMMON_ERRORS) {
     if (error instanceof errorType) {
       console.error(error);
       return response.status(error.statusCode).json(error);
@@ -39,4 +45,24 @@ function onErrorHandler(error, request, response) {
   });
   console.error(fallbackError);
   return response.status(fallbackError.statusCode).json(fallbackError);
+}
+
+async function setSessionCookie(sessionToken, response) {
+  const setCookieValue = serializeCookie("session_id", sessionToken, {
+    path: "/",
+    maxAge: SESSION_LIFETIME_MS / 1000,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  });
+  response.setHeader("Set-Cookie", setCookieValue);
+}
+
+async function clearSessionCookie(response) {
+  const setCookieValue = serializeCookie("session_id", "invalid", {
+    path: "/",
+    maxAge: -1,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  });
+  response.setHeader("Set-Cookie", setCookieValue);
 }

@@ -9,6 +9,8 @@ export {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  serializeUser,
+  serializePublicUser,
   postUser,
   postSession,
   getUser,
@@ -56,6 +58,12 @@ function serializeUser(user) {
   };
 }
 
+function serializePublicUser(user) {
+  const serialized = serializeUser(user);
+  delete serialized.password;
+  return serialized;
+}
+
 async function createDummyUser(overrides = {}) {
   const dummyUserInfo = {
     username: "dummy_user",
@@ -65,7 +73,7 @@ async function createDummyUser(overrides = {}) {
   };
 
   const dummyUser = await createUser(dummyUserInfo);
-  return serializeUser(dummyUser);
+  return serializePublicUser(dummyUser);
 }
 
 async function postUser(userInput) {

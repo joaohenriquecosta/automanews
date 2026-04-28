@@ -1,11 +1,18 @@
-import { exceptionHandlers } from "infra/controller.js";
+import {
+  exceptionHandlers,
+  setSessionCookie,
+  clearSessionCookie,
+} from "infra/controller.js";
 import { createRouter } from "next-connect";
-import { createSession, SESSION_LIFETIME_MS } from "models/session.js";
-import { serialize as serializeCookie } from "cookie";
+import {
+  createSession,
+  getValidSessionByToken,
+  expireSessionById,
+} from "models/session.js";
 
 const router = createRouter();
 
-router.post(postHandler);
+router.post(postHandler).delete(deleteHandler);
 
 export default router.handler({
   ...exceptionHandlers,
@@ -15,14 +22,15 @@ async function postHandler(request, response) {
   const { email, password } = request.body ?? {};
   const newSession = await createSession({ email, password });
 
-  const setCookieValue = serializeCookie("session_id", newSession.token, {
-    path: "/",
-    maxAge: SESSION_LIFETIME_MS / 1000,
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-  });
-
-  response.setHeader("Set-Cookie", setCookieValue);
+  setSessionCookie(newSession.token, response);
 
   return response.status(201).json(newSession);
+}
+
+async function deleteHandler(request, response) {
+  const token = request.cookies.session_id;
+  const session = await getValidSessionByToken(token);
+  const expiredSession = await expireSessionById(session.id);
+  clearSessionCookie(response);
+  return response.status(200).json(expiredSession);
 }

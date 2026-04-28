@@ -6,6 +6,7 @@ export {
   createUser,
   getUserByUsername,
   getUserByEmail,
+  getUserById,
   updateUser,
   serializePublicUser,
 };
@@ -44,6 +45,18 @@ async function getUserByEmail(email) {
       cause: new Error(`User ${email} not found`),
       message: `Usuário ${email} não encontrado.`,
       action: `Verifique se o usuário com email ${email} existe.`,
+    });
+  }
+  return user;
+}
+
+async function getUserById(userId) {
+  const user = await findUserByIdQuery(userId);
+  if (!user) {
+    throw new NotFoundError({
+      cause: new Error(`User ${userId} not found`),
+      message: `Usuário ${userId} não encontrado.`,
+      action: `Verifique se o usuário ${userId} existe.`,
     });
   }
   return user;
@@ -159,6 +172,23 @@ async function findUserByEmailQuery(email) {
         1
     ;`,
     values: [email],
+  });
+  return result.rows[0] ?? null;
+}
+
+async function findUserByIdQuery(userId) {
+  const result = await query({
+    text: `
+      SELECT
+        *
+      FROM
+        users
+      WHERE
+        id = $1
+      LIMIT
+        1
+    ;`,
+    values: [userId],
   });
   return result.rows[0] ?? null;
 }
