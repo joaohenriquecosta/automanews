@@ -11,9 +11,12 @@ export {
   serializePublicUser,
 };
 
+const newUserDefaultFeatures = ["read:activation_token"];
+
 /* ── Public API ────────────────────────────────────── */
 
 async function createUser(userInputValues) {
+  userInputValues.features = newUserDefaultFeatures;
   await validateUniqueUsername(userInputValues.username);
   await validateUniqueEmail(userInputValues.email);
   const secureInput = await hashObjectPassword(userInputValues);
@@ -197,13 +200,13 @@ async function insertUserQuery(user) {
   const result = await query({
     text: `
       INSERT INTO
-        users (username, email, password)
+        users (username, email, password, features)
       VALUES
-        ($1, $2, $3)
+        ($1, $2, $3, $4)
       RETURNING
         *
     ;`,
-    values: [user.username, user.email, user.password],
+    values: [user.username, user.email, user.password, user.features],
   });
   return result.rows[0];
 }
