@@ -4,6 +4,7 @@ import { createUser, getUserByUsername } from "models/user";
 
 /** Use 127.0.0.1 so probes match `wait-for-next-dev.js` and avoid IPv6/localhost quirks on Linux. */
 export const testBaseUrl = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
+const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
 export {
   waitForAllServices,
@@ -14,6 +15,8 @@ export {
   postUser,
   postSession,
   getUser,
+  deleteAllEmails,
+  getLastEmail,
 };
 
 function isJsonResponse(response) {
@@ -22,7 +25,8 @@ function isJsonResponse(response) {
 }
 
 async function waitForAllServices() {
-  return await waitForWebServer();
+  await waitForWebServer();
+  await waitForEmailServer();
 
   async function waitForWebServer() {
     return retry(assertStatusJsonOk, {
@@ -41,6 +45,25 @@ async function waitForAllServices() {
         throw new Error(
           `status: want 200+json, got ${statusRes.status} content-type=${statusRes.headers.get("content-type")}`,
         );
+      }
+    }
+  }
+
+  async function waitForEmailServer() {
+    return retry(assertEmailServerOk, {
+      retries: 30,
+      maxTimeout: 1500,
+      onRetry: (error, attempt) => {
+        console.log(
+          `Attempt ${attempt} failed waiting for MailCatcher. Error: ${error.message}`,
+        );
+      },
+    });
+
+    async function assertEmailServerOk() {
+      const res = await fetch(emailHttpUrl);
+      if (res.status !== 200) {
+        throw new Error(`mailcatcher: want 200, got ${res.status}`);
       }
     }
   }
@@ -113,4 +136,28 @@ async function postSession(credentials) {
 async function getUser(username) {
   const user = await getUserByUsername(username);
   return serializeUser(user);
+}
+
+async function deleteAllEmails() {
+  await fetch(`${emailHttpUrl}/messages`, {
+    method: "DELETE",
+  });
+}
+
+async function getLastEmail() {
+  const response = await fetch(`${emailHttpUrl}/messages`, {
+    method: "GET",
+  });
+  const emails = await response.json();
+  const lastEmail = emails.pop();
+
+  const emailTextResponse = await fetch(
+    `${emailHttpUrl}/messages/${lastEmail.id}.plain`,
+  );
+
+  const lastEmailTextBody = await emailTextResponse.text();
+
+  lastEmail.text = lastEmailTextBody;
+
+  return lastEmail;
 }
