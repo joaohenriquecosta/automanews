@@ -66,6 +66,7 @@ describe("PATCH /api/v1/users/[username]", () => {
           id: userInDatabase.id,
           username: validUserInputValues.username,
           email: validUserInputValues.email,
+          features: [],
           created_at: userInDatabase.created_at,
           updated_at: userInDatabase.updated_at,
         });

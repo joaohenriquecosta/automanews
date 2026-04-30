@@ -37,6 +37,7 @@ describe("GET /api/v1/users/[username]", () => {
           id: dummyUser.id,
           username: dummyUser.username,
           email: dummyUser.email,
+          features: [],
           created_at: dummyUser.created_at,
           updated_at: dummyUser.updated_at,
         });
@@ -60,6 +61,7 @@ describe("GET /api/v1/users/[username]", () => {
           id: dummyUser.id,
           username: dummyUser.username,
           email: dummyUser.email,
+          features: [],
           created_at: dummyUser.created_at,
           updated_at: dummyUser.updated_at,
         });
