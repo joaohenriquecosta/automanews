@@ -1,9 +1,9 @@
 import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
+import { getOrigin } from "infra/webserver.js";
 
-/** Use 127.0.0.1 so probes match `wait-for-next-dev.js` and avoid IPv6/localhost quirks on Linux. */
-export const testBaseUrl = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
+const testBaseUrl = getOrigin();
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
 export {
@@ -17,6 +17,8 @@ export {
   getUser,
   deleteAllEmails,
   getLastEmail,
+  getActivationTokenByUserId,
+  testBaseUrl,
 };
 
 function isJsonResponse(response) {
@@ -151,6 +153,10 @@ async function getLastEmail() {
   const emails = await response.json();
   const lastEmail = emails.pop();
 
+  if (!lastEmail) {
+    return null;
+  }
+
   const emailTextResponse = await fetch(
     `${emailHttpUrl}/messages/${lastEmail.id}.plain`,
   );
@@ -160,4 +166,21 @@ async function getLastEmail() {
   lastEmail.text = lastEmailTextBody;
 
   return lastEmail;
+}
+
+async function getActivationTokenByUserId(userId) {
+  const activationTokenResult = await query({
+    text: `
+      SELECT
+        *
+      FROM
+        user_activation_tokens
+      WHERE
+        user_id = $1
+      LIMIT
+        1
+    ;`,
+    values: [userId],
+  });
+  return activationTokenResult.rows[0];
 }
