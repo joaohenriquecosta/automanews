@@ -17,6 +17,11 @@ exports.up = (pgm) => {
       notNull: true,
     },
 
+    used_at: {
+      type: "timestamp with time zone",
+      default: null,
+    },
+
     expires_at: {
       type: "timestamp with time zone",
       notNull: true,

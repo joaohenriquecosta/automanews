@@ -177,8 +177,6 @@ async function getActivationTokenByUserId(userId) {
         user_activation_tokens
       WHERE
         user_id = $1
-      LIMIT
-        1
     ;`,
     values: [userId],
   });
