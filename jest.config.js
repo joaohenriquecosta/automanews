@@ -8,7 +8,9 @@ const createJestConfig = nextJest({
 });
 
 const jestConfig = createJestConfig({
+  maxWorkers: 1,
   moduleDirectories: ["node_modules", "<rootDir>"],
+  setupFilesAfterEnv: ["<rootDir>/tests/setup-jest.js"],
   testPathIgnorePatterns: ["<rootDir>/.claude/"],
   testTimeout: 60000, // 60 seconds
 });

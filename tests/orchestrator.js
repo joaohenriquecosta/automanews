@@ -14,10 +14,12 @@ export {
   serializePublicUser,
   postUser,
   postSession,
+  patchActivationToken,
   getUser,
   deleteAllEmails,
   getLastEmail,
   getActivationTokensByUserId,
+  getValidActivationTokenByToken,
   expireActivationToken,
   testBaseUrl,
 };
@@ -136,6 +138,19 @@ async function postSession(credentials) {
   };
 }
 
+async function patchActivationToken(token) {
+  const response = await fetch(`${testBaseUrl}/api/v1/activations/${token}`, {
+    method: "PATCH",
+  });
+
+  const responseBody = await response.json();
+
+  return {
+    response,
+    responseBody,
+  };
+}
+
 async function getUser(username) {
   const user = await getUserByUsername(username);
   return serializeUser(user);
@@ -184,6 +199,26 @@ async function getActivationTokensByUserId(userId) {
     values: [userId],
   });
   return activationTokenResult.rows;
+}
+
+async function getValidActivationTokenByToken(token) {
+  const activationTokenResult = await query({
+    text: `
+      SELECT
+        *
+      FROM
+        user_activation_tokens
+      WHERE
+        token = $1
+        AND used_at IS NULL
+        AND expires_at > NOW()
+      LIMIT
+        1
+    ;`,
+    values: [token],
+  });
+
+  return activationTokenResult.rows[0] ?? null;
 }
 
 async function expireActivationToken(activationTokenId) {

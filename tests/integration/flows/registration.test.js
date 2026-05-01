@@ -3,20 +3,24 @@ import {
   clearDatabase,
   deleteAllEmails,
   postUser,
+  patchActivationToken,
   getLastEmail,
   getUser,
   getActivationTokensByUserId,
+  getValidActivationTokenByToken,
   expireActivationToken,
   testBaseUrl,
 } from "tests/orchestrator";
 import { runPendingMigrations } from "models/migrator.js";
-import { getValidActivationTokenByToken } from "models/activation.js";
+
+const successfulRegistrationUser = {
+  username: "SuccessfulRegistrationFlowTest",
+  email: "successful.registration.flow@test.com",
+  password: "successfulregistrationflowtest",
+};
 
 beforeAll(async () => {
   await waitForAllServices();
-});
-
-beforeEach(async () => {
   await clearDatabase();
   await runPendingMigrations();
   await deleteAllEmails();
@@ -24,15 +28,10 @@ beforeEach(async () => {
 
 describe("Use case: Successful registration flow", () => {
   test("Activation email is sent with correct content and activation link", async () => {
-    const userInput = {
-      username: "ActivationEmailTest",
-      email: "activation.email@test.com",
-      password: "activationemailtest",
-    };
-    const { response } = await postUser(userInput);
+    const { response } = await postUser(successfulRegistrationUser);
     expect(response.status).toBe(201);
 
-    const user = await getUser(userInput.username);
+    const user = await getUser(successfulRegistrationUser.username);
 
     const activationTokens = await getActivationTokensByUserId(user.id);
     expect(activationTokens.length).toBe(1);
@@ -53,7 +52,6 @@ describe("Use case: Successful registration flow", () => {
 
     const validActivationToken =
       await getValidActivationTokenByToken(emailActivationToken);
-    expect(validActivationToken).not.toBeNull();
     expect(validActivationToken.user_id).toBe(user.id);
     expect(validActivationToken.used_at).toBeNull();
     expect(Date.parse(validActivationToken.expires_at)).toBeGreaterThan(
@@ -61,6 +59,27 @@ describe("Use case: Successful registration flow", () => {
     );
   });
 
+  test("Activation link activates the user account with create:session permission", async () => {
+    const activationEmail = await getLastEmail();
+    const emailActivationToken = extractActivationToken(activationEmail.text);
+    const { response: activationResponse } =
+      await patchActivationToken(emailActivationToken);
+    expect(activationResponse.status).toBe(200);
+
+    const activatedUser = await getUser(successfulRegistrationUser.username);
+    expect(activatedUser.features).toEqual(["create:session"]);
+
+    const [usedActivationToken] = await getActivationTokensByUserId(
+      activatedUser.id,
+    );
+    expect(usedActivationToken.token).toBe(emailActivationToken);
+    expect(Date.parse(usedActivationToken.used_at)).not.toBeNaN();
+  });
+
+  // Login with user account should create a new session
+});
+
+describe("Use case: Expired activation token recovery flow", () => {
   test("Expired activation token resend email includes the new activation link", async () => {
     const userInput = {
       username: "ExpiredActivationTokenTest",
@@ -92,10 +111,6 @@ describe("Use case: Successful registration flow", () => {
       await getValidActivationTokenByToken(emailActivationToken);
     expect(validActivationToken.id).toBe(newActivationToken.id);
   });
-
-  // The activation link activates the user account with the base permissions
-
-  // Login with user account should create a new session
 });
 
 function extractActivationToken(text) {
