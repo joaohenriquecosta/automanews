@@ -17,7 +17,8 @@ export {
   getUser,
   deleteAllEmails,
   getLastEmail,
-  getActivationTokenByUserId,
+  getActivationTokensByUserId,
+  expireActivationToken,
   testBaseUrl,
 };
 
@@ -168,7 +169,7 @@ async function getLastEmail() {
   return lastEmail;
 }
 
-async function getActivationTokenByUserId(userId) {
+async function getActivationTokensByUserId(userId) {
   const activationTokenResult = await query({
     text: `
       SELECT
@@ -177,8 +178,28 @@ async function getActivationTokenByUserId(userId) {
         user_activation_tokens
       WHERE
         user_id = $1
+      ORDER BY
+        created_at DESC
     ;`,
     values: [userId],
   });
-  return activationTokenResult.rows[0];
+  return activationTokenResult.rows;
+}
+
+async function expireActivationToken(activationTokenId) {
+  const result = await query({
+    text: `
+      UPDATE
+        user_activation_tokens
+      SET
+        expires_at = '2000-01-01T00:00:00.000Z'
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [activationTokenId],
+  });
+
+  return result.rows[0];
 }

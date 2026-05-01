@@ -1,7 +1,6 @@
 import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
-import { createUser, serializePublicUser } from "models/user.js";
-import { sendActivationEmail } from "models/activation.js";
+import { registerUser } from "models/user.js";
 
 const router = createRouter();
 
@@ -12,7 +11,6 @@ export default router.handler({
 });
 
 async function postHandler(request, response) {
-  const newUser = await createUser(request.body);
-  await sendActivationEmail(newUser);
-  return response.status(201).json(serializePublicUser(newUser));
+  const registration = await registerUser(request.body);
+  return response.status(registration.statusCode).json(registration.body);
 }

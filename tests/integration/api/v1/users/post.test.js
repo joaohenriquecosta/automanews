@@ -4,6 +4,8 @@ import {
   createDummyUser,
   postUser,
   getUser,
+  getActivationTokensByUserId,
+  expireActivationToken,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
@@ -106,6 +108,52 @@ describe("POST /api/v1/users", () => {
           expect(responseBody).toEqual(expectedError);
         },
       );
+    });
+    describe("With duplicated pending registration", () => {
+      test("Returns a check-email response when the activation token is still valid", async () => {
+        const userInput = {
+          username: "valid_activation_token",
+          email: "valid_activation_token@test.dev",
+          password: "valid_activation_token_password",
+        };
+        const { response: firstResponse } = await postUser(userInput);
+        expect(firstResponse.status).toBe(201);
+
+        const { response, responseBody } = await postUser(userInput);
+
+        expect(response.status).toBe(200);
+        expect(responseBody).toEqual({
+          message: "Já existe um cadastro pendente para este usuário.",
+          action: "Verifique seu email para ativar sua conta.",
+        });
+      });
+
+      test("Creates a new activation token when the previous one is expired", async () => {
+        const userInput = {
+          username: "expired_activation_token",
+          email: "expired_activation_token@test.dev",
+          password: "expired_activation_token_password",
+        };
+        const { response: firstResponse } = await postUser(userInput);
+        expect(firstResponse.status).toBe(201);
+
+        const user = await getUser(userInput.username);
+        const [expiredToken] = await getActivationTokensByUserId(user.id);
+        const updatedExpiredToken = await expireActivationToken(
+          expiredToken.id,
+        );
+        expect(Date.parse(updatedExpiredToken.expires_at)).toBeLessThan(
+          Date.now(),
+        );
+
+        const { response, responseBody } = await postUser(userInput);
+
+        expect(response.status).toBe(200);
+        expect(responseBody).toEqual({
+          message: "Enviamos um novo email de ativação.",
+          action: "Verifique seu email para ativar sua conta.",
+        });
+      });
     });
   });
 });

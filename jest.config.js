@@ -9,6 +9,7 @@ const createJestConfig = nextJest({
 
 const jestConfig = createJestConfig({
   moduleDirectories: ["node_modules", "<rootDir>"],
+  testPathIgnorePatterns: ["<rootDir>/.claude/"],
   testTimeout: 60000, // 60 seconds
 });
 

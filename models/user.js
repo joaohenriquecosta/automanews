@@ -1,8 +1,10 @@
 import { query } from "infra/database.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
-import { hashObjectPassword } from "models/password";
+import { sendActivationEmail } from "models/activation.js";
+import { comparePassword, hashObjectPassword } from "models/password.js";
 
 export {
+  registerUser,
   createUser,
   getUserByUsername,
   getUserByEmail,
@@ -15,11 +17,31 @@ const newUserDefaultFeatures = ["read:activation_token"];
 
 /* ── Public API ────────────────────────────────────── */
 
+async function registerUser(userInputValues) {
+  try {
+    const newUser = await createUser(userInputValues);
+    await sendActivationEmail(newUser);
+    return {
+      statusCode: 201,
+      body: serializePublicUser(newUser),
+    };
+  } catch (error) {
+    if (!(error instanceof ValidationError)) {
+      throw error;
+    }
+
+    return await handlePendingRegistration(userInputValues, error);
+  }
+}
+
 async function createUser(userInputValues) {
-  userInputValues.features = newUserDefaultFeatures;
-  await validateUniqueUsername(userInputValues.username);
-  await validateUniqueEmail(userInputValues.email);
-  const secureInput = await hashObjectPassword(userInputValues);
+  const userInputWithDefaults = {
+    ...userInputValues,
+    features: newUserDefaultFeatures,
+  };
+  await validateUniqueUsername(userInputWithDefaults.username);
+  await validateUniqueEmail(userInputWithDefaults.email);
+  const secureInput = await hashObjectPassword(userInputWithDefaults);
   return await insertUserQuery(secureInput);
 }
 
@@ -118,6 +140,73 @@ async function updateUser(username, userInputValues) {
   }
 
   return await updateUserQuery(username, setClauses.join(", "), values);
+}
+
+async function handlePendingRegistration(userInputValues, originalError) {
+  const existingUser = await getExistingUserByUsernameOrThrowOriginalError(
+    userInputValues.username,
+    originalError,
+  );
+
+  if (
+    typeof userInputValues.email !== "string" ||
+    typeof userInputValues.password !== "string"
+  ) {
+    throw originalError;
+  }
+
+  const hasSameEmail =
+    existingUser.email.toLowerCase() === userInputValues.email.toLowerCase();
+  const hasSamePassword = await comparePassword(
+    userInputValues.password,
+    existingUser.password,
+  );
+
+  if (!hasSameEmail || !hasSamePassword) {
+    throw originalError;
+  }
+
+  return await getPendingRegistrationResponse(existingUser);
+}
+
+async function getExistingUserByUsernameOrThrowOriginalError(
+  username,
+  originalError,
+) {
+  try {
+    return await getUserByUsername(username);
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw originalError;
+    }
+
+    throw error;
+  }
+}
+
+async function getPendingRegistrationResponse(user) {
+  const hasValidActivationToken = await hasValidActivationTokenForUserQuery(
+    user.id,
+  );
+
+  if (hasValidActivationToken) {
+    return {
+      statusCode: 200,
+      body: {
+        message: "Já existe um cadastro pendente para este usuário.",
+        action: "Verifique seu email para ativar sua conta.",
+      },
+    };
+  }
+
+  await sendActivationEmail(user);
+  return {
+    statusCode: 200,
+    body: {
+      message: "Enviamos um novo email de ativação.",
+      action: "Verifique seu email para ativar sua conta.",
+    },
+  };
 }
 
 /* ── Validation ────────────────────────────────────── */
@@ -227,4 +316,24 @@ async function updateUserQuery(username, setClauses, values) {
     values: [...values, username],
   });
   return result.rows[0];
+}
+
+async function hasValidActivationTokenForUserQuery(userId) {
+  const result = await query({
+    text: `
+      SELECT
+        1
+      FROM
+        user_activation_tokens
+      WHERE
+        user_id = $1
+        AND used_at IS NULL
+        AND expires_at > NOW()
+      LIMIT
+        1
+    ;`,
+    values: [userId],
+  });
+
+  return result.rows.length > 0;
 }
