@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { query } from "infra/database.js";
-import { AuthenticationError } from "infra/errors.js";
+import { AuthenticationError, ForbiddenError } from "infra/errors.js";
 import { getUserById } from "models/user.js";
+import { isAllowedTo } from "models/authorization.js";
 
 export {
   createSession,
@@ -15,6 +16,14 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
 async function createSession(userId) {
   const user = await getUserById(userId);
+  if (!isAllowedTo(user, "create:session")) {
+    throw new ForbiddenError({
+      cause: new Error(`User ${user.id} cannot create sessions`),
+      message: "Você não possui permissão para criar sessões.",
+      action: "Ative sua conta ou entre em contato com o suporte.",
+    });
+  }
+
   const token = randomBytes(48).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MS);
   const session = await insertSessionQuery({

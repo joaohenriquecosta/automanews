@@ -2,13 +2,17 @@ import { sendMail } from "infra/mailer.js";
 import { query } from "infra/database.js";
 import { randomBytes } from "crypto";
 import { getOrigin } from "infra/webserver.js";
-import { ValidationError } from "infra/errors.js";
+import { ForbiddenError, ValidationError } from "infra/errors.js";
+import { getUserById } from "models/user.js";
+import {
+  isAllowedTo,
+  DEFAULT_ACTIVATED_USER_FEATURES,
+} from "models/authorization.js";
 
 const baseUrl = getOrigin();
 const ACTIVATION_TOKEN_LIFETIME_MS = 1000 * 60 * 15; // 15 minutes
-const activatedUserDefaultFeatures = ["create:session"];
 
-export { sendActivationEmail, activateUserByToken, activateUserById };
+export { sendActivationEmail, activateUserByToken };
 
 async function sendActivationEmail(user) {
   const activationTokenValue = randomBytes(32).toString("hex");
@@ -54,6 +58,16 @@ async function markActivationTokenAsUsed(activationTokenId) {
 
 async function activateUserByToken(token) {
   const activationToken = await getValidActivationTokenByToken(token);
+  const targetUser = await getUserById(activationToken.user_id);
+
+  if (!isAllowedTo(targetUser, "read:activation_token")) {
+    throw new ForbiddenError({
+      cause: new Error(`User ${targetUser.id} cannot read activation tokens`),
+      message: "Você não possui permissão para usar este token de ativação.",
+      action: "Entre em contato com o suporte.",
+    });
+  }
+
   const usedActivationToken = await markActivationTokenAsUsed(
     activationToken.id,
   );
@@ -65,7 +79,7 @@ async function activateUserByToken(token) {
 async function activateUserById(userId) {
   return await updateUserFeaturesByIdQuery(
     userId,
-    activatedUserDefaultFeatures,
+    DEFAULT_ACTIVATED_USER_FEATURES,
   );
 }
 

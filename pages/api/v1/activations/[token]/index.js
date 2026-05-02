@@ -1,10 +1,12 @@
 import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
 import { activateUserByToken } from "models/activation.js";
+import { loadCurrentUser, canRequest } from "infra/controller.js";
 
 const router = createRouter();
 
-router.patch(patchHandler);
+router.use(loadCurrentUser);
+router.patch(canRequest("read:activation_token"), patchHandler);
 
 export default router.handler({
   ...exceptionHandlers,

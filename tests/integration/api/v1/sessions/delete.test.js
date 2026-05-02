@@ -2,6 +2,7 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  activateUser,
   testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
@@ -21,6 +22,7 @@ describe("DELETE /api/v1/sessions", () => {
   describe("Standard user", () => {
     test("With valid session token", async () => {
       dummyUser = await createDummyUser({ password: "password" });
+      dummyUser = await activateUser(dummyUser.id);
       const session = await createSession(dummyUser.id);
       const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
         method: "DELETE",

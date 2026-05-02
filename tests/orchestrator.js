@@ -2,7 +2,8 @@ import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
 import { getOrigin } from "infra/webserver.js";
-import { activateUserById } from "models/activation.js";
+import { randomBytes } from "node:crypto";
+import { SESSION_LIFETIME_MS } from "models/session.js";
 
 const testBaseUrl = getOrigin();
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
@@ -23,6 +24,7 @@ export {
   getValidActivationTokenByToken,
   expireActivationToken,
   activateUser,
+  createSessionForUser,
   testBaseUrl,
 };
 
@@ -107,7 +109,42 @@ async function createDummyUser(overrides = {}) {
 }
 
 async function activateUser(userId) {
-  return await activateUserById(userId);
+  const result = await query({
+    text: `
+      UPDATE
+        users
+      SET
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [userId, ["create:session", "read:session"]],
+  });
+
+  return serializePublicUser(result.rows[0]);
+}
+
+async function createSessionForUser(userId) {
+  const result = await query({
+    text: `
+      INSERT INTO
+        sessions (token, user_id, expires_at)
+      VALUES
+        ($1, $2, $3)
+      RETURNING
+        *
+    ;`,
+    values: [
+      randomBytes(48).toString("hex"),
+      userId,
+      new Date(Date.now() + SESSION_LIFETIME_MS),
+    ],
+  });
+
+  return result.rows[0];
 }
 
 async function postUser(userInput) {

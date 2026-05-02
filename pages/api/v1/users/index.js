@@ -1,10 +1,15 @@
-import { exceptionHandlers } from "infra/controller.js";
+import {
+  exceptionHandlers,
+  loadCurrentUser,
+  canRequest,
+} from "infra/controller.js";
 import { createRouter } from "next-connect";
 import { registerUser } from "models/user.js";
 
 const router = createRouter();
 
-router.post(postHandler);
+router.use(loadCurrentUser);
+router.post(canRequest("create:user"), postHandler);
 
 export default router.handler({
   ...exceptionHandlers,

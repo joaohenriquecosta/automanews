@@ -3,13 +3,14 @@ import {
   clearDatabase,
   createDummyUser,
   activateUser,
+  createSessionForUser,
   getUser,
   postSession,
   testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
-import { createSession, SESSION_LIFETIME_MS } from "models/session.js";
+import { SESSION_LIFETIME_MS } from "models/session.js";
 import { parse as parseCookie } from "set-cookie-parser";
 
 beforeAll(async () => {
@@ -132,7 +133,7 @@ describe("POST /api/v1/sessions", () => {
         email: "user_without_create_session@test.dev",
         password: "password",
       });
-      const session = await createSession(existingUser.id);
+      const session = await createSessionForUser(existingUser.id);
 
       const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
         method: "POST",

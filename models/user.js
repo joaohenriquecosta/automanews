@@ -2,6 +2,7 @@ import { query } from "infra/database.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
 import { sendActivationEmail } from "models/activation.js";
 import { comparePassword, hashObjectPassword } from "models/password.js";
+import { DEFAULT_UNACTIVATED_USER_FEATURES } from "models/authorization.js";
 
 export {
   registerUser,
@@ -12,8 +13,6 @@ export {
   updateUser,
   serializePublicUser,
 };
-
-const newUserDefaultFeatures = ["read:activation_token"];
 
 /* ── Public API ────────────────────────────────────── */
 
@@ -37,7 +36,7 @@ async function registerUser(userInputValues) {
 async function createUser(userInputValues) {
   const userInputWithDefaults = {
     ...userInputValues,
-    features: newUserDefaultFeatures,
+    features: DEFAULT_UNACTIVATED_USER_FEATURES,
   };
   await validateUniqueUsername(userInputWithDefaults.username);
   await validateUniqueEmail(userInputWithDefaults.email);

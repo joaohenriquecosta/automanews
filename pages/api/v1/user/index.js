@@ -2,11 +2,16 @@ import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
 import { getValidSessionByToken, refreshSession } from "models/session.js";
 import { getUserById, serializePublicUser } from "models/user.js";
-import { setSessionCookie } from "infra/controller.js";
+import {
+  setSessionCookie,
+  loadCurrentUser,
+  canRequest,
+} from "infra/controller.js";
 
 const router = createRouter();
 
-router.get(getHandler);
+router.use(loadCurrentUser);
+router.get(canRequest("read:session"), getHandler);
 
 export default router.handler({
   ...exceptionHandlers,

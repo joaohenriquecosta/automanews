@@ -10,6 +10,7 @@ import {
   getActivationTokensByUserId,
   getValidActivationTokenByToken,
   expireActivationToken,
+  serializePublicUser,
   testBaseUrl,
 } from "tests/orchestrator";
 import { runPendingMigrations } from "models/migrator.js";
@@ -29,6 +30,7 @@ beforeAll(async () => {
 
 describe("Use case: Successful registration flow", () => {
   let activatedUser;
+  let sessionToken;
 
   test("Activation email is sent with correct content and activation link", async () => {
     const { response } = await postUser(successfulRegistrationUser);
@@ -62,7 +64,7 @@ describe("Use case: Successful registration flow", () => {
     );
   });
 
-  test("Activation link activates the user account with create:session permission", async () => {
+  test("Activation link activates the user account with session permissions", async () => {
     const activationEmail = await getLastEmail();
     const emailActivationToken = extractActivationToken(activationEmail.text);
     const { response: activationResponse } =
@@ -70,7 +72,7 @@ describe("Use case: Successful registration flow", () => {
     expect(activationResponse.status).toBe(200);
 
     activatedUser = await getUser(successfulRegistrationUser.username);
-    expect(activatedUser.features).toEqual(["create:session"]);
+    expect(activatedUser.features).toEqual(["create:session", "read:session"]);
 
     const [usedActivationToken] = await getActivationTokensByUserId(
       activatedUser.id,
@@ -87,6 +89,20 @@ describe("Use case: Successful registration flow", () => {
 
     expect(response.status).toBe(201);
     expect(responseBody.user_id).toBe(activatedUser.id);
+    sessionToken = responseBody.token;
+  });
+
+  test("Get user profile returns the user with session permissions", async () => {
+    const response = await fetch(`${testBaseUrl}/api/v1/user`, {
+      headers: {
+        Cookie: `session_id=${sessionToken}`,
+      },
+    });
+    const responseBody = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(responseBody).toEqual(serializePublicUser(activatedUser));
+    expect(responseBody.features).toEqual(["create:session", "read:session"]);
   });
 });
 
