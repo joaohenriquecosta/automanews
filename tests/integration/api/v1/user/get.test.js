@@ -23,10 +23,7 @@ beforeAll(async () => {
   await clearDatabase();
   await runPendingMigrations();
   dummyUser = await createDummyUser({ password: "password" });
-  session = await createSession({
-    email: dummyUser.email,
-    password: "password",
-  });
+  session = await createSession(dummyUser.id);
 });
 
 describe("GET /api/v1/user", () => {
@@ -76,10 +73,7 @@ describe("GET /api/v1/user", () => {
       jest.useFakeTimers({
         now: new Date(Date.now() - SESSION_LIFETIME_MS + timeToExpire),
       });
-      const almostExpiredSession = await createSession({
-        email: dummyUser.email,
-        password: "password",
-      });
+      const almostExpiredSession = await createSession(dummyUser.id);
       jest.useRealTimers();
 
       const almostExpiredSessionToken = almostExpiredSession.token;
@@ -147,10 +141,7 @@ describe("GET /api/v1/user", () => {
       jest.useFakeTimers({
         now: new Date(Date.now() - SESSION_LIFETIME_MS),
       });
-      const expiredSession = await createSession({
-        email: dummyUser.email,
-        password: "password",
-      });
+      const expiredSession = await createSession(dummyUser.id);
       jest.useRealTimers();
 
       const expiredSessionToken = expiredSession.token;

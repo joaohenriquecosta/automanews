@@ -11,6 +11,9 @@ import {
   getValidSessionByToken,
   expireSessionById,
 } from "models/session.js";
+import { getAuthenticatedUser } from "models/authentication.js";
+import { isAllowedTo } from "models/authorization.js";
+import { ForbiddenError } from "infra/errors.js";
 
 const router = createRouter();
 
@@ -24,7 +27,14 @@ export default router.handler({
 
 async function postHandler(request, response) {
   const { email, password } = request.body ?? {};
-  const newSession = await createSession({ email, password });
+  const user = await getAuthenticatedUser(email, password);
+  if (!isAllowedTo(user, "create:session")) {
+    throw new ForbiddenError({
+      message: "Você não possui permissão para criar sessões.",
+      action: "Ative sua conta ou entre em contato com o suporte.",
+    });
+  }
+  const newSession = await createSession(user.id);
 
   setSessionCookie(newSession.token, response);
 

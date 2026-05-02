@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { query } from "infra/database.js";
-import { getAuthenticatedUser } from "models/authentication.js";
 import { AuthenticationError } from "infra/errors.js";
+import { getUserById } from "models/user.js";
 
 export {
   createSession,
@@ -13,8 +13,8 @@ export {
 
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
-async function createSession({ email, password }) {
-  const user = await getAuthenticatedUser(email, password);
+async function createSession(userId) {
+  const user = await getUserById(userId);
   const token = randomBytes(48).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MS);
   const session = await insertSessionQuery({

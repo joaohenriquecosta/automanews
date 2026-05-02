@@ -2,6 +2,7 @@ import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
 import { getOrigin } from "infra/webserver.js";
+import { activateUserById } from "models/activation.js";
 
 const testBaseUrl = getOrigin();
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
@@ -21,6 +22,7 @@ export {
   getActivationTokensByUserId,
   getValidActivationTokenByToken,
   expireActivationToken,
+  activateUser,
   testBaseUrl,
 };
 
@@ -102,6 +104,10 @@ async function createDummyUser(overrides = {}) {
 
   const dummyUser = await createUser(dummyUserInfo);
   return serializePublicUser(dummyUser);
+}
+
+async function activateUser(userId) {
+  return await activateUserById(userId);
 }
 
 async function postUser(userInput) {

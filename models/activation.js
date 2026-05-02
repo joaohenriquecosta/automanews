@@ -8,7 +8,7 @@ const baseUrl = getOrigin();
 const ACTIVATION_TOKEN_LIFETIME_MS = 1000 * 60 * 15; // 15 minutes
 const activatedUserDefaultFeatures = ["create:session"];
 
-export { sendActivationEmail, activateUserByToken };
+export { sendActivationEmail, activateUserByToken, activateUserById };
 
 async function sendActivationEmail(user) {
   const activationTokenValue = randomBytes(32).toString("hex");

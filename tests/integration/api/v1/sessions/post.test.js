@@ -2,6 +2,7 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  activateUser,
   getUser,
   postSession,
   testBaseUrl,
@@ -39,7 +40,8 @@ describe("POST /api/v1/sessions", () => {
         email: "session_user@test.dev",
         password: "correct_horse_battery",
       };
-      await createDummyUser(existingUser);
+      const createdUser = await createDummyUser(existingUser);
+      await activateUser(createdUser.id);
 
       const { response, responseBody } = await postSession({
         email: existingUser.email,
@@ -130,10 +132,7 @@ describe("POST /api/v1/sessions", () => {
         email: "user_without_create_session@test.dev",
         password: "password",
       });
-      const session = await createSession({
-        email: existingUser.email,
-        password: "password",
-      });
+      const session = await createSession(existingUser.id);
 
       const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
         method: "POST",

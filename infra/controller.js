@@ -10,6 +10,7 @@ import {
 import { serialize as serializeCookie } from "cookie";
 import { SESSION_LIFETIME_MS, getValidSessionByToken } from "models/session.js";
 import { getUserById, serializePublicUser } from "models/user.js";
+import { isAllowedTo } from "models/authorization.js";
 
 export {
   exceptionHandlers,
@@ -34,16 +35,16 @@ async function loadCurrentUser(request, response, next) {
 
 function canRequest(feature) {
   return function canRequestMiddleware(request, response, next) {
-    const currentUserFeatures = request.context.user.features ?? [];
-    if (!currentUserFeatures.includes(feature)) {
-      throw new ForbiddenError({
-        cause: new Error(`Missing feature ${feature}`),
-        message: `Você não possui permissão para executar esta ação.`,
-        action: `Verifique se o seu usuário possui a feature ${feature}.`,
-      });
+    const user = request.context.user;
+    if (isAllowedTo(user, feature)) {
+      return next();
     }
 
-    return next();
+    throw new ForbiddenError({
+      cause: new Error(`Missing feature ${feature}`),
+      message: `Você não possui permissão para executar esta ação.`,
+      action: `Verifique se o seu usuário possui a feature ${feature}.`,
+    });
   };
 }
 
