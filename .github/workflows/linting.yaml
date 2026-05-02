@@ -2,9 +2,13 @@ name: Linting
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  prettier:
-    name: Prettier
+  code-lint:
+    name: Prettier and ESLint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -12,23 +16,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/hydrogen"
+          cache: "npm"
 
       - run: npm ci
 
       - run: npm run lint:prettier:check
-  eslint:
-    name: ESLint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "lts/hydrogen"
-
-      - run: npm ci
 
       - run: npm run lint:eslint:check
+
   commitlint:
     name: Commitlint
     runs-on: ubuntu-latest
@@ -40,6 +35,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/hydrogen"
+          cache: "npm"
 
       - run: npm ci
 

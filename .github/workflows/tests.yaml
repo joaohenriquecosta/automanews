@@ -2,6 +2,10 @@ name: Automated Tests
 
 on: pull_request
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   jest:
     name: Jest Ubuntu
@@ -12,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/hydrogen"
+          cache: "npm"
 
       - run: npm ci
 
