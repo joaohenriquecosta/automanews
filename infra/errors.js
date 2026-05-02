@@ -1,4 +1,4 @@
-function toErrorJson(error, extra = {}) {
+function serializeError(error, extra = {}) {
   return {
     name: error.name,
     status_code: error.statusCode,
@@ -17,7 +17,7 @@ class InternalServerError extends Error {
   }
 
   toJSON() {
-    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
+    return serializeError(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -30,7 +30,7 @@ class MethodNotAllowedError extends Error {
   }
 
   toJSON() {
-    return toErrorJson(this);
+    return serializeError(this);
   }
 }
 
@@ -43,7 +43,7 @@ class ServiceError extends Error {
   }
 
   toJSON() {
-    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
+    return serializeError(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -56,7 +56,7 @@ class ValidationError extends Error {
   }
 
   toJSON() {
-    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
+    return serializeError(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -71,7 +71,23 @@ class NotFoundError extends Error {
   }
 
   toJSON() {
-    return toErrorJson(this, { cause: this.cause?.toJSON?.() });
+    return serializeError(this, { cause: this.cause?.toJSON?.() });
+  }
+}
+
+class ForbiddenError extends Error {
+  constructor({ cause, message, action }) {
+    super(message || "Você não possui permissão para executar esta ação.", {
+      cause,
+    });
+    this.name = "ForbiddenError";
+    this.action =
+      action || "Verifique as features necessárias para executar esta ação.";
+    this.statusCode = 403;
+  }
+
+  toJSON() {
+    return serializeError(this, { cause: this.cause?.toJSON?.() });
   }
 }
 
@@ -86,7 +102,7 @@ class AuthenticationError extends Error {
 
   /** Omit `cause` so nested NotFoundError etc. is never sent to clients (anti-enumeration). */
   toJSON() {
-    return toErrorJson(this);
+    return serializeError(this);
   }
 }
 
@@ -96,5 +112,6 @@ export {
   ServiceError,
   ValidationError,
   NotFoundError,
+  ForbiddenError,
   AuthenticationError,
 };

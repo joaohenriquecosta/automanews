@@ -2,6 +2,8 @@ import {
   exceptionHandlers,
   setSessionCookie,
   clearSessionCookie,
+  loadCurrentUser,
+  canRequest,
 } from "infra/controller.js";
 import { createRouter } from "next-connect";
 import {
@@ -12,7 +14,9 @@ import {
 
 const router = createRouter();
 
-router.post(postHandler).delete(deleteHandler);
+router.use(loadCurrentUser);
+router.post(canRequest("create:session"), postHandler);
+router.delete(deleteHandler);
 
 export default router.handler({
   ...exceptionHandlers,

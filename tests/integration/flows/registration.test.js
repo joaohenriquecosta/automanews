@@ -3,6 +3,7 @@ import {
   clearDatabase,
   deleteAllEmails,
   postUser,
+  postSession,
   patchActivationToken,
   getLastEmail,
   getUser,
@@ -27,6 +28,8 @@ beforeAll(async () => {
 });
 
 describe("Use case: Successful registration flow", () => {
+  let activatedUser;
+
   test("Activation email is sent with correct content and activation link", async () => {
     const { response } = await postUser(successfulRegistrationUser);
     expect(response.status).toBe(201);
@@ -66,7 +69,7 @@ describe("Use case: Successful registration flow", () => {
       await patchActivationToken(emailActivationToken);
     expect(activationResponse.status).toBe(200);
 
-    const activatedUser = await getUser(successfulRegistrationUser.username);
+    activatedUser = await getUser(successfulRegistrationUser.username);
     expect(activatedUser.features).toEqual(["create:session"]);
 
     const [usedActivationToken] = await getActivationTokensByUserId(
@@ -76,7 +79,15 @@ describe("Use case: Successful registration flow", () => {
     expect(Date.parse(usedActivationToken.used_at)).not.toBeNaN();
   });
 
-  // Login with user account should create a new session
+  test("Login with activated user account creates a new session", async () => {
+    const { response, responseBody } = await postSession({
+      email: successfulRegistrationUser.email,
+      password: successfulRegistrationUser.password,
+    });
+
+    expect(response.status).toBe(201);
+    expect(responseBody.user_id).toBe(activatedUser.id);
+  });
 });
 
 describe("Use case: Expired activation token recovery flow", () => {

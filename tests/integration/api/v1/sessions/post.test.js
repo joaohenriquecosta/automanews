@@ -4,10 +4,11 @@ import {
   createDummyUser,
   getUser,
   postSession,
+  testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
-import { SESSION_LIFETIME_MS } from "models/session.js";
+import { createSession, SESSION_LIFETIME_MS } from "models/session.js";
 import { parse as parseCookie } from "set-cookie-parser";
 
 beforeAll(async () => {
@@ -118,6 +119,42 @@ describe("POST /api/v1/sessions", () => {
         status_code: 401,
         message: "Email ou senha inválidos.",
         action: "Verifique se o email e a senha fornecidos são válidos.",
+      });
+    });
+  });
+
+  describe("Standard user", () => {
+    test("Returns ForbiddenError when the user cannot create sessions", async () => {
+      const existingUser = await createDummyUser({
+        username: "user_without_create_session",
+        email: "user_without_create_session@test.dev",
+        password: "password",
+      });
+      const session = await createSession({
+        email: existingUser.email,
+        password: "password",
+      });
+
+      const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${session.token}`,
+        },
+        body: JSON.stringify({
+          email: existingUser.email,
+          password: "password",
+        }),
+      });
+
+      const responseBody = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(responseBody).toEqual({
+        name: "ForbiddenError",
+        status_code: 403,
+        message: "Você não possui permissão para executar esta ação.",
+        action: "Verifique se o seu usuário possui a feature create:session.",
       });
     });
   });
