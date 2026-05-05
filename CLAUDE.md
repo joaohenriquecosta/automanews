@@ -26,8 +26,6 @@ Collaborative content platform for home automation topics, targeting a Brazilian
 
 Docker must be running before any `npm run dev` or `npm test` command — those scripts invoke `docker compose` internally.
 
-If Docker is not started: `sudo dockerd &>/tmp/dockerd.log &` and `sudo chmod 666 /var/run/docker.sock`.
-
 ## Common commands
 
 | Command | What it does |
@@ -55,7 +53,7 @@ These are intentional choices from the curso.dev curriculum. Do not propose repl
 - **Pages Router over App Router** — simpler, more mature, follows the curriculum.
 - **`next-connect`** — enables Express-style middleware chaining inside Next.js API routes.
 - **Integration-first testing** — tests hit the real database and real Next.js server at `localhost:3000`. No mocking. Real bugs surface in real stacks.
-- **Feature-based authorization** — `user.features` is a `varchar[]` column. Permissions are checked at runtime by feature name (`models/authorization.js`). No role hierarchy — features are explicit strings following the `user:feature:resource` model.
+- **Feature-based authorization** — `user.features` is a `varchar[]` column. Permissions are checked at runtime by feature name (`models/authorization.js`). No role hierarchy — features are explicit strings.
 - **Error shape** — every error has `name`, `status_code`, `message` (PT-BR, user-safe), `action` (PT-BR, suggested next step). Always use the classes in `infra/errors.js`.
 
 ## Test conventions
