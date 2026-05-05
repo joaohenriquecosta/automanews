@@ -153,9 +153,18 @@ async function updateUser(username, userInputValues, requester) {
 }
 
 async function addFeatures(userId, featuresToAdd) {
-  const user = await getUserById(userId);
-  const features = Array.from(new Set([...user.features, ...featuresToAdd]));
-  return await updateUserFeaturesByIdQuery(userId, features);
+  if (!Array.isArray(featuresToAdd)) {
+    throw new ValidationError({
+      message: "Lista de features inválida.",
+      action: "Forneça featuresToAdd como um array de strings.",
+    });
+  }
+
+  if (featuresToAdd.length === 0) {
+    return await getUserById(userId);
+  }
+
+  return await appendDistinctUserFeaturesByIdQuery(userId, featuresToAdd);
 }
 
 async function handlePendingRegistration(userInputValues, originalError) {
@@ -334,21 +343,37 @@ async function updateUserQuery(username, setClauses, values) {
   return result.rows[0];
 }
 
-async function updateUserFeaturesByIdQuery(userId, features) {
+async function appendDistinctUserFeaturesByIdQuery(userId, featuresToAdd) {
   const result = await query({
     text: `
       UPDATE
         users
       SET
-        features = $2,
+        features = (
+          SELECT
+            COALESCE(array_agg(f ORDER BY ord), '{}')
+          FROM (
+            SELECT DISTINCT ON (f)
+              f,
+              ord
+            FROM
+              unnest(
+                features || COALESCE($2::varchar[], '{}'::varchar[])
+              ) WITH ORDINALITY AS t(f, ord)
+            ORDER BY
+              f,
+              ord
+          ) AS deduped
+        ),
         updated_at = timezone('utc', now())
       WHERE
         id = $1
       RETURNING
         *
     ;`,
-    values: [userId, features],
+    values: [userId, featuresToAdd],
   });
+
   return result.rows[0];
 }
 
