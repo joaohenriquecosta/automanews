@@ -362,7 +362,7 @@ async function hasValidActivationTokenForUserQuery(userId) {
       WHERE
         user_id = $1
         AND used_at IS NULL
-        AND expires_at > NOW()
+        AND expires_at > timezone('utc', now())
       LIMIT
         1
     ;`,

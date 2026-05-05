@@ -62,7 +62,7 @@ async function expireSessionByIdQuery(sessionId) {
         sessions
       SET
         expires_at = expires_at - INTERVAL '1 year',
-        updated_at = NOW()
+        updated_at = timezone('utc', now())
       WHERE
         id = $1
       RETURNING
@@ -97,7 +97,7 @@ async function getValidSessionByTokenQuery(token) {
         sessions
       WHERE
         token = $1
-        AND expires_at > NOW()
+        AND expires_at > timezone('utc', now())
       LIMIT
         1
     ;`,
@@ -113,7 +113,7 @@ async function refreshSessionExpirationDateQuery(sessionId, expiresAt) {
         sessions
       SET
         expires_at = $2,
-        updated_at = NOW()
+        updated_at = timezone('utc', now())
       WHERE
         id = $1
       RETURNING

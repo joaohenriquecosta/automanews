@@ -255,7 +255,7 @@ async function getValidActivationTokenByToken(token) {
       WHERE
         token = $1
         AND used_at IS NULL
-        AND expires_at > NOW()
+        AND expires_at > timezone('utc', now())
       LIMIT
         1
     ;`,
