@@ -3,7 +3,7 @@ import { ValidationError, NotFoundError, ForbiddenError } from "infra/errors.js"
 import { sendActivationEmail } from "models/activation.js";
 import { comparePassword, hashObjectPassword } from "models/password.js";
 import { DEFAULT_UNACTIVATED_USER_FEATURES } from "models/authorization.js";
-import { isAllowedTo } from "models/authorization.js";
+import { isAuthorized } from "models/authorization.js";
 
 export {
   registerUser,
@@ -109,7 +109,7 @@ async function updateUser(username, userInputValues, requester) {
 
   const currentUser = await getUserByUsername(username);
 
-  if (!isAllowedTo(requester, "update:user", currentUser)) {
+  if (!isAuthorized(requester, "update:user", currentUser)) {
     throw new ForbiddenError({
       cause: new Error(`User cannot update user ${currentUser.id}`),
       message: "Você não possui permissão para executar esta ação.",

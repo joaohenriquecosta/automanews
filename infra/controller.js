@@ -11,7 +11,7 @@ import { serialize as serializeCookie } from "cookie";
 import { SESSION_LIFETIME_MS, getValidSessionByToken } from "models/session.js";
 import { getUserById, serializePublicUser } from "models/user.js";
 import {
-  isAllowedTo,
+  isAuthorized,
   DEFAULT_ANONYMOUS_USER_FEATURES,
 } from "models/authorization.js";
 
@@ -41,7 +41,7 @@ function canRequest(feature, getResource) {
     const user = request.context.user;
     const resource = getResource ? await getResource(request) : undefined;
 
-    if (isAllowedTo(user, feature, resource)) {
+    if (isAuthorized(user, feature, resource)) {
       if (resource) {
         request.context.resource = resource;
       }

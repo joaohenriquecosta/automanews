@@ -11,21 +11,21 @@ const DEFAULT_ACTIVATED_USER_FEATURES = [
 ];
 
 export {
-  isAllowedTo,
+  isAuthorized,
   DEFAULT_ANONYMOUS_USER_FEATURES,
   DEFAULT_UNACTIVATED_USER_FEATURES,
   DEFAULT_ACTIVATED_USER_FEATURES,
 };
 
-function isAllowedTo(user, feature, resource) {
-  if (!user.features.includes(feature)) {
-    return false;
-  }
-
+function isAuthorized(user, feature, resource) {
   if (feature === "update:user") {
-    const isSameUser = user.id === resource.id;
-    return isSameUser || user.features.includes("update:user:others");
+    if (!resource || !user.features.includes("update:user")) {
+      return false;
+    }
+    return (
+      user.id === resource.id || user.features.includes("update:user:others")
+    );
   }
 
-  return true;
+  return user.features.includes(feature);
 }

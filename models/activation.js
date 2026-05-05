@@ -5,7 +5,7 @@ import { getOrigin } from "infra/webserver.js";
 import { ForbiddenError, ValidationError } from "infra/errors.js";
 import { getUserById } from "models/user.js";
 import {
-  isAllowedTo,
+  isAuthorized,
   DEFAULT_ACTIVATED_USER_FEATURES,
 } from "models/authorization.js";
 
@@ -60,7 +60,7 @@ async function activateUserByToken(token) {
   const activationToken = await getValidActivationTokenByToken(token);
   const targetUser = await getUserById(activationToken.user_id);
 
-  if (!isAllowedTo(targetUser, "read:activation_token")) {
+  if (!isAuthorized(targetUser, "read:activation_token")) {
     throw new ForbiddenError({
       cause: new Error(`User ${targetUser.id} cannot read activation tokens`),
       message: "Você não possui permissão para usar este token de ativação.",
