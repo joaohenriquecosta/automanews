@@ -14,6 +14,7 @@ import {
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
+import { DEFAULT_ACTIVATED_USER_FEATURES } from "models/authorization.js";
 
 beforeAll(async () => {
   await waitForAllServices();
@@ -60,10 +61,7 @@ describe("PATCH /api/v1/activations/[token]", () => {
       expect(currentTokenStatus).toBeNull();
 
       const activatedUser = await getUser(userInput.username);
-      expect(activatedUser.features).toEqual([
-        "create:session",
-        "read:session",
-      ]);
+      expect(activatedUser.features).toEqual(DEFAULT_ACTIVATED_USER_FEATURES);
 
       const [usedActivationToken] = await getActivationTokensByUserId(user.id);
       expect(usedActivationToken.token).toBe(activationToken.token);

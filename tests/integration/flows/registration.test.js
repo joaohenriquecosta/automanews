@@ -14,6 +14,7 @@ import {
   testBaseUrl,
 } from "tests/orchestrator";
 import { runPendingMigrations } from "models/migrator.js";
+import { DEFAULT_ACTIVATED_USER_FEATURES } from "models/authorization.js";
 
 const successfulRegistrationUser = {
   username: "SuccessfulRegistrationFlowTest",
@@ -72,7 +73,7 @@ describe("Use case: Successful registration flow", () => {
     expect(activationResponse.status).toBe(200);
 
     activatedUser = await getUser(successfulRegistrationUser.username);
-    expect(activatedUser.features).toEqual(["create:session", "read:session"]);
+    expect(activatedUser.features).toEqual(DEFAULT_ACTIVATED_USER_FEATURES);
 
     const [usedActivationToken] = await getActivationTokensByUserId(
       activatedUser.id,
@@ -102,7 +103,7 @@ describe("Use case: Successful registration flow", () => {
 
     expect(response.status).toBe(200);
     expect(responseBody).toEqual(serializePublicUser(activatedUser));
-    expect(responseBody.features).toEqual(["create:session", "read:session"]);
+    expect(responseBody.features).toEqual(DEFAULT_ACTIVATED_USER_FEATURES);
   });
 });
 

@@ -36,10 +36,16 @@ async function loadCurrentUser(request, response, next) {
   return next();
 }
 
-function canRequest(feature) {
-  return function canRequestMiddleware(request, response, next) {
+function canRequest(feature, getResource) {
+  return async function canRequestMiddleware(request, response, next) {
     const user = request.context.user;
-    if (isAllowedTo(user, feature)) {
+    const resource = getResource ? await getResource(request) : undefined;
+
+    if (isAllowedTo(user, feature, resource)) {
+      if (resource) {
+        request.context.resource = resource;
+      }
+
       return next();
     }
 

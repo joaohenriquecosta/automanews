@@ -1,8 +1,9 @@
 import { query } from "infra/database.js";
-import { ValidationError, NotFoundError } from "infra/errors.js";
+import { ValidationError, NotFoundError, ForbiddenError } from "infra/errors.js";
 import { sendActivationEmail } from "models/activation.js";
 import { comparePassword, hashObjectPassword } from "models/password.js";
 import { DEFAULT_UNACTIVATED_USER_FEATURES } from "models/authorization.js";
+import { isAllowedTo } from "models/authorization.js";
 
 export {
   registerUser,
@@ -11,6 +12,7 @@ export {
   getUserByEmail,
   getUserById,
   updateUser,
+  addFeatures,
   serializePublicUser,
 };
 
@@ -86,7 +88,7 @@ async function getUserById(userId) {
   return user;
 }
 
-async function updateUser(username, userInputValues) {
+async function updateUser(username, userInputValues, requester) {
   const allowedFields = ["username", "email", "password"];
 
   if (Object.keys(userInputValues).length === 0) {
@@ -106,6 +108,15 @@ async function updateUser(username, userInputValues) {
   }
 
   const currentUser = await getUserByUsername(username);
+
+  if (!isAllowedTo(requester, "update:user", currentUser)) {
+    throw new ForbiddenError({
+      cause: new Error(`User cannot update user ${currentUser.id}`),
+      message: "Você não possui permissão para executar esta ação.",
+      action:
+        "Verifique se o seu usuário possui a feature update:user para este recurso.",
+    });
+  }
 
   if (
     "username" in userInputValues &&
@@ -139,6 +150,12 @@ async function updateUser(username, userInputValues) {
   }
 
   return await updateUserQuery(username, setClauses.join(", "), values);
+}
+
+async function addFeatures(userId, featuresToAdd) {
+  const user = await getUserById(userId);
+  const features = Array.from(new Set([...user.features, ...featuresToAdd]));
+  return await updateUserFeaturesByIdQuery(userId, features);
 }
 
 async function handlePendingRegistration(userInputValues, originalError) {
@@ -313,6 +330,24 @@ async function updateUserQuery(username, setClauses, values) {
         *
     ;`,
     values: [...values, username],
+  });
+  return result.rows[0];
+}
+
+async function updateUserFeaturesByIdQuery(userId, features) {
+  const result = await query({
+    text: `
+      UPDATE
+        users
+      SET
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [userId, features],
   });
   return result.rows[0];
 }
