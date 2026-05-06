@@ -36,7 +36,6 @@ describe("GET /api/v1/users/[username]", () => {
         expect(responseBody).toEqual({
           id: dummyUser.id,
           username: dummyUser.username,
-          email: dummyUser.email,
           features: ["read:activation_token"],
           created_at: dummyUser.created_at,
           updated_at: dummyUser.updated_at,
@@ -60,7 +59,6 @@ describe("GET /api/v1/users/[username]", () => {
         expect(responseBody).toEqual({
           id: dummyUser.id,
           username: dummyUser.username,
-          email: dummyUser.email,
           features: ["read:activation_token"],
           created_at: dummyUser.created_at,
           updated_at: dummyUser.updated_at,

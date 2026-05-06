@@ -175,7 +175,7 @@ describe("GET /api/v1/user", () => {
         name: "ForbiddenError",
         status_code: 403,
         message: "Você não possui permissão para executar esta ação.",
-        action: "Verifique se o seu usuário possui a feature read:session.",
+        action: 'Verifique se o seu usuário possui a feature "read:session"',
       });
     });
   });

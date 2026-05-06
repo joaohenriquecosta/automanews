@@ -1,41 +1,113 @@
-import { waitForAllServices, testBaseUrl } from "tests/orchestrator.js";
+import {
+  waitForAllServices,
+  clearDatabase,
+  testBaseUrl,
+  activateUser,
+  createDummyUser,
+  createSessionForUser,
+} from "tests/orchestrator.js";
+import { runPendingMigrations } from "models/migrator.js";
+import { addFeatures } from "models/user.js";
 
-// Parse numeric values to match the API's integer output
 const expectedDbVersion = process.env.POSTGRES_VERSION;
 const expectedMaxConnections = parseInt(process.env.POSTGRES_MAX_CONNECTIONS);
-const expectedOpenedConnections = 1;
+
+const forbiddenReadStatusBody = {
+  name: "ForbiddenError",
+  status_code: 403,
+  message: "Você não possui permissão para executar esta ação.",
+  action: 'Verifique se o seu usuário possui a feature "read:status"',
+};
+
+beforeAll(async () => {
+  await waitForAllServices();
+  await clearDatabase();
+  await runPendingMigrations();
+});
+
+async function getStatus(sessionToken) {
+  const response = await fetch(`${testBaseUrl}/api/v1/status`, {
+    headers: sessionToken ? { Cookie: `session_id=${sessionToken}` } : {},
+  });
+  const responseBody = await response.json();
+  return { response, responseBody };
+}
 
 describe("GET /api/v1/status", () => {
   describe("Anonymous user", () => {
-    let response;
-    let responseBody;
+    test("Returns ForbiddenError", async () => {
+      const { response, responseBody } = await getStatus();
 
-    // Fetches data once before running the individual test assertions
-    beforeAll(async () => {
-      await waitForAllServices();
-      response = await fetch(`${testBaseUrl}/api/v1/status`);
-      responseBody = await response.json();
+      expect(response.status).toBe(403);
+      expect(responseBody).toEqual(forbiddenReadStatusBody);
     });
+  });
 
-    test("Retrieving current server status", () => {
-      // Verifies the HTTP status code
+  describe("Standard user", () => {
+    test("Returns ForbiddenError", async () => {
+      const dummyUser = await createDummyUser({
+        username: "status_get_standard_user",
+        email: "status.get.standard@test.dev",
+      });
+      const standardUser = await activateUser(dummyUser.id);
+      const session = await createSessionForUser(standardUser.id);
+
+      const { response, responseBody } = await getStatus(session.token);
+
+      expect(response.status).toBe(403);
+      expect(responseBody).toEqual(forbiddenReadStatusBody);
+    });
+  });
+
+  describe('Privileged user with "read:status" feature', () => {
+    test("Returns status without database version", async () => {
+      const dummyUser = await createDummyUser({
+        username: "status_get_priv_user",
+        email: "status.get.priv@test.dev",
+      });
+      const activatedUser = await activateUser(dummyUser.id);
+      const privilegedUser = await addFeatures(activatedUser.id, [
+        "read:status",
+      ]);
+      const session = await createSessionForUser(privilegedUser.id);
+
+      const { response, responseBody } = await getStatus(session.token);
+
       expect(response.status).toBe(200);
-
-      // Validates that 'updated_at' is present and is a valid ISO string
       expect(responseBody.updated_at).toBeDefined();
       const parsedUpdatedAt = new Date(responseBody.updated_at).toISOString();
       expect(responseBody.updated_at).toEqual(parsedUpdatedAt);
+      expect(responseBody.dependencies.db.max_connections).toEqual(
+        expectedMaxConnections,
+      );
+      expect(
+        responseBody.dependencies.db.opened_connections,
+      ).toBeGreaterThanOrEqual(1);
+      expect(responseBody.dependencies.db.version).toBeUndefined();
     });
 
-    test("Retrieving database dependency information", () => {
-      // Verifies the integrity of the 'db' metadata using top-level constants
+    test('Returns database version when user has "read:status:all" feature', async () => {
+      const dummyUser = await createDummyUser({
+        username: "status_get_priv_all_user",
+        email: "status.get.priv.all@test.dev",
+      });
+      const activatedUser = await activateUser(dummyUser.id);
+      const privilegedUser = await addFeatures(activatedUser.id, [
+        "read:status",
+        "read:status:all",
+      ]);
+      const session = await createSessionForUser(privilegedUser.id);
+
+      const { response, responseBody } = await getStatus(session.token);
+
+      expect(response.status).toBe(200);
       expect(responseBody.dependencies.db.version).toEqual(expectedDbVersion);
       expect(responseBody.dependencies.db.max_connections).toEqual(
         expectedMaxConnections,
       );
-      expect(responseBody.dependencies.db.opened_connections).toEqual(
-        expectedOpenedConnections,
-      );
+      expect(
+        responseBody.dependencies.db.opened_connections,
+      ).toBeGreaterThanOrEqual(1);
     });
   });
 });

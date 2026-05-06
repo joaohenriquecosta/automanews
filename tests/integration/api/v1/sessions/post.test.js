@@ -154,7 +154,7 @@ describe("POST /api/v1/sessions", () => {
         name: "ForbiddenError",
         status_code: 403,
         message: "Você não possui permissão para executar esta ação.",
-        action: "Verifique se o seu usuário possui a feature create:session.",
+        action: 'Verifique se o seu usuário possui a feature "create:session"',
       });
     });
   });

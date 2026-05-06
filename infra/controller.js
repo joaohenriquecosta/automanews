@@ -52,7 +52,7 @@ function canRequest(feature, getResource) {
     throw new ForbiddenError({
       cause: new Error(`Missing feature ${feature}`),
       message: `Você não possui permissão para executar esta ação.`,
-      action: `Verifique se o seu usuário possui a feature ${feature}.`,
+      action: `Verifique se o seu usuário possui a feature "${feature}"`,
     });
   };
 }
@@ -91,7 +91,9 @@ function onErrorHandler(error, request, response) {
 
   for (const errorType of COMMON_ERRORS) {
     if (error instanceof errorType) {
-      console.error(error);
+      if (error.statusCode >= 500) {
+        console.error(error);
+      }
       return response.status(error.statusCode).json(error);
     }
   }

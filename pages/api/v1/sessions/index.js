@@ -12,6 +12,7 @@ import {
   expireSessionById,
 } from "models/session.js";
 import { getAuthenticatedUser } from "models/authentication.js";
+import { filterOutput } from "models/authorization.js";
 
 const router = createRouter();
 
@@ -30,7 +31,9 @@ async function postHandler(request, response) {
 
   setSessionCookie(newSession.token, response);
 
-  return response.status(201).json(newSession);
+  const secureOutput = filterOutput(user, "read:session", newSession);
+
+  return response.status(201).json(secureOutput);
 }
 
 async function deleteHandler(request, response) {
@@ -38,5 +41,11 @@ async function deleteHandler(request, response) {
   const session = await getValidSessionByToken(token);
   const expiredSession = await expireSessionById(session.id);
   clearSessionCookie(response);
-  return response.status(200).json(expiredSession);
+  const userRequesting = request.context.user;
+  const secureOutput = filterOutput(
+    userRequesting,
+    "read:session",
+    expiredSession,
+  );
+  return response.status(200).json(secureOutput);
 }

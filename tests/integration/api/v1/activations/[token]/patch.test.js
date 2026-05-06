@@ -71,7 +71,7 @@ function expectRequesterForbidden(response, responseBody) {
     status_code: 403,
     message: "Você não possui permissão para executar esta ação.",
     action:
-      "Verifique se o seu usuário possui a feature read:activation_token.",
+      'Verifique se o seu usuário possui a feature "read:activation_token"',
   });
 }
 
@@ -99,15 +99,11 @@ describe("PATCH /api/v1/activations/[token]", () => {
       );
 
       expect(response.status).toBe(200);
-      expect(uuidValidate(responseBody.used_activation_token.id)).toBe(true);
-      expect(uuidVersion(responseBody.used_activation_token.id)).toBe(4);
-      expect(responseBody.used_activation_token.token).toBe(
-        activationToken.token,
-      );
-      expect(responseBody.used_activation_token.user_id).toBe(user.id);
-      expect(
-        Date.parse(responseBody.used_activation_token.used_at),
-      ).not.toBeNaN();
+      expect(uuidValidate(responseBody.id)).toBe(true);
+      expect(uuidVersion(responseBody.id)).toBe(4);
+      expect(responseBody.token).toBe(activationToken.token);
+      expect(responseBody.user_id).toBe(user.id);
+      expect(Date.parse(responseBody.used_at)).not.toBeNaN();
       expect(responseBody.user).toBeUndefined();
 
       const currentTokenStatus = await getValidActivationTokenByToken(

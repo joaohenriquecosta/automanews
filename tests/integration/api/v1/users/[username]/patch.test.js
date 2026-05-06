@@ -53,7 +53,7 @@ function expectForbiddenUpdateUser(response, responseBody) {
     name: "ForbiddenError",
     status_code: 403,
     message: "Você não possui permissão para executar esta ação.",
-    action: "Verifique se o seu usuário possui a feature update:user.",
+    action: 'Verifique se o seu usuário possui a feature "update:user"',
   });
 }
 
@@ -208,12 +208,12 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(responseBody).toEqual({
         id: userInDatabase.id,
         username: validUserInputValues.username,
-        email: validUserInputValues.email,
         features: DEFAULT_ACTIVATED_USER_FEATURES,
         created_at: userInDatabase.created_at,
         updated_at: userInDatabase.updated_at,
       });
       expect(responseBody.password).toBeUndefined();
+      expect(userInDatabase.email).toBe(validUserInputValues.email);
 
       const isStoredHashValid = await comparePassword(
         validUserInputValues.password,
@@ -330,12 +330,12 @@ describe("PATCH /api/v1/users/[username]", () => {
         expect(responseBody).toEqual({
           id: targetUser.id,
           username: userInputValues.username,
-          email: userInputValues.email,
           features: expectedFeatures,
           created_at: userInDatabase.created_at,
           updated_at: userInDatabase.updated_at,
         });
         expect(responseBody.password).toBeUndefined();
+        expect(userInDatabase.email).toBe(userInputValues.email);
       },
     );
 

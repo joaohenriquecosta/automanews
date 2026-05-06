@@ -1,8 +1,8 @@
 /* global Promise */
 /**
  * Waits until `next dev` serves JSON from the API routes integration tests use.
- * `wait-on` against /api/v1/status alone is not enough: Next compiles other routes
- * on first request; until then dynamic routes can return HTML error pages.
+ * Uses anonymous-safe probes (e.g. GET /api/v1/users → 405 JSON): /api/v1/status may
+ * require `read:status` and return 403 without a session.
  */
 const baseUrl = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
 const timeoutMs = Number(process.env.WAIT_FOR_NEXT_MS ?? 120_000);
@@ -20,10 +20,10 @@ function isJsonResponse(response) {
 }
 
 async function assertNextApiReady() {
-  const statusRes = await fetch(`${baseUrl}/api/v1/status`);
-  if (statusRes.status !== 200 || !isJsonResponse(statusRes)) {
+  const usersIndexRes = await fetch(`${baseUrl}/api/v1/users`);
+  if (usersIndexRes.status !== 405 || !isJsonResponse(usersIndexRes)) {
     throw new Error(
-      `status: want 200+json, got ${statusRes.status} content-type=${statusRes.headers.get("content-type")}`,
+      `users index: want 405+json, got ${usersIndexRes.status} content-type=${usersIndexRes.headers.get("content-type")}`,
     );
   }
 
@@ -34,20 +34,13 @@ async function assertNextApiReady() {
     );
   }
 
-  const usersIndexRes = await fetch(`${baseUrl}/api/v1/users`);
-  if (
-    (usersIndexRes.status !== 405 && usersIndexRes.status !== 404) ||
-    !isJsonResponse(usersIndexRes)
-  ) {
-    throw new Error(
-      `users index: want 404/405+json, got ${usersIndexRes.status} content-type=${usersIndexRes.headers.get("content-type")}`,
-    );
-  }
-
   const migrationsRes = await fetch(`${baseUrl}/api/v1/migrations`);
-  if (migrationsRes.status !== 200 || !isJsonResponse(migrationsRes)) {
+  const migrationsOk =
+    isJsonResponse(migrationsRes) &&
+    (migrationsRes.status === 200 || migrationsRes.status === 403);
+  if (!migrationsOk) {
     throw new Error(
-      `migrations: want 200+json, got ${migrationsRes.status} content-type=${migrationsRes.headers.get("content-type")}`,
+      `migrations: want 200/403+json, got ${migrationsRes.status} content-type=${migrationsRes.headers.get("content-type")}`,
     );
   }
 }

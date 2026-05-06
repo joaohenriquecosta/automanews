@@ -2,6 +2,7 @@ import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
 import { activateUserByToken } from "models/activation.js";
 import { loadCurrentUser, canRequest } from "infra/controller.js";
+import { filterOutput } from "models/authorization.js";
 
 const router = createRouter();
 
@@ -16,7 +17,11 @@ async function patchHandler(request, response) {
   const { token } = request.query;
   const usedActivationToken = await activateUserByToken(token);
 
-  return response.status(200).json({
-    used_activation_token: usedActivationToken,
-  });
+  const userRequesting = request.context.user;
+  const secureOutput = filterOutput(
+    userRequesting,
+    "read:activation_token",
+    usedActivationToken,
+  );
+  return response.status(200).json(secureOutput);
 }

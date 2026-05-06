@@ -1,5 +1,9 @@
 import { query } from "infra/database.js";
-import { ValidationError, NotFoundError, ForbiddenError } from "infra/errors.js";
+import {
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+} from "infra/errors.js";
 import { sendActivationEmail } from "models/activation.js";
 import { comparePassword, hashObjectPassword } from "models/password.js";
 import { DEFAULT_UNACTIVATED_USER_FEATURES } from "models/authorization.js";
@@ -114,7 +118,7 @@ async function updateUser(username, userInputValues, requester) {
       cause: new Error(`User cannot update user ${currentUser.id}`),
       message: "Você não possui permissão para executar esta ação.",
       action:
-        "Verifique se o seu usuário possui a feature update:user para este recurso.",
+        'Verifique se o seu usuário possui a feature "update:user" para este recurso.',
     });
   }
 

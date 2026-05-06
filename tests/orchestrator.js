@@ -50,10 +50,10 @@ async function waitForAllServices() {
     });
 
     async function assertStatusJsonOk() {
-      const statusRes = await fetch(`${testBaseUrl}/api/v1/status`);
-      if (statusRes.status !== 200 || !isJsonResponse(statusRes)) {
+      const usersIndexRes = await fetch(`${testBaseUrl}/api/v1/users`);
+      if (usersIndexRes.status !== 405 || !isJsonResponse(usersIndexRes)) {
         throw new Error(
-          `status: want 200+json, got ${statusRes.status} content-type=${statusRes.headers.get("content-type")}`,
+          `users index: want 405+json, got ${usersIndexRes.status} content-type=${usersIndexRes.headers.get("content-type")}`,
         );
       }
     }
