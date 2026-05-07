@@ -20,10 +20,13 @@ Inspired by [TabNews](https://www.tabnews.com.br/), the project brings together 
 | Layer            | Technology                                                                                    |
 | ---------------- | --------------------------------------------------------------------------------------------- |
 | Framework        | [Next.js 14](https://nextjs.org/) (Pages Router)                                              |
-| Database         | [PostgreSQL 16](https://www.postgresql.org/)                                                  |
+| HTTP routing     | [next-connect](https://github.com/hoangvvo/next-connect)                                      |
+| Database         | [PostgreSQL 16](https://www.postgresql.org/) via [pg](https://node-postgres.com/)             |
+| Email (dev/test) | [MailCatcher](https://mailcatcher.me/) — SMTP on `1025`, web UI on `1080`                     |
+| Auth             | Session cookies + [bcryptjs](https://github.com/dcodeIO/bcrypt.js)                            |
 | Containerization | [Docker](https://www.docker.com/)                                                             |
 | Migrations       | [node-pg-migrate](https://github.com/salsita/node-pg-migrate)                                 |
-| Testing          | [Jest](https://jestjs.io/)                                                                    |
+| Testing          | [Jest](https://jestjs.io/) (integration-first, against the live stack)                        |
 | Linting          | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/)                              |
 | Commits          | [Commitizen](https://github.com/commitizen/cz-cli) + [Commitlint](https://commitlint.js.org/) |
 
@@ -52,45 +55,48 @@ npm run dev
 
 This single command handles the full startup sequence:
 
-1. Starts the PostgreSQL container via Docker Compose
+1. Starts the PostgreSQL and MailCatcher containers via Docker Compose
 2. Waits for the database to accept connections
 3. Runs pending migrations
 4. Launches the Next.js dev server at `http://localhost:3000`
 
-> **Note:** When the dev server is stopped, the `postdev` script automatically stops the database container.
+> **Note:** When the dev server is stopped, the `postdev` script automatically stops the infrastructure containers.
 
 ### Services
 
-| Service    | Command                                      | Port |
-| ---------- | -------------------------------------------- | ---- |
-| PostgreSQL | `docker compose -f infra/compose.yaml up -d` | 5432 |
-| Next.js    | `npx next dev`                               | 3000 |
+| Service     | Command                                      | Port(s)         |
+| ----------- | -------------------------------------------- | --------------- |
+| PostgreSQL  | `docker compose -f infra/compose.yaml up -d` | `5432`          |
+| MailCatcher | (started by the same compose file)           | `1025` / `1080` |
+| Next.js     | `npx next dev`                               | `3000`          |
+
+MailCatcher's web UI is available at [http://localhost:1080](http://localhost:1080) for inspecting outgoing emails (e.g. account activation links) during development.
 
 ---
 
 ## Available Scripts
 
-| Script                        | Description                                           |
-| ----------------------------- | ----------------------------------------------------- |
-| `npm run dev`                 | Start all services and launch the dev server          |
-| `npm test`                    | Run integration tests (starts services automatically) |
-| `npm run test:watch`          | Run tests in watch mode                               |
-| `npm run lint:prettier:check` | Check code formatting with Prettier                   |
-| `npm run lint:prettier:fix`   | Auto-fix formatting with Prettier                     |
-| `npm run lint:eslint:check`   | Run ESLint checks                                     |
-| `npm run services:up`         | Start infrastructure containers only                  |
-| `npm run services:stop`       | Pause containers (preserves data)                     |
-| `npm run services:down`       | Remove containers and networks                        |
-| `npm run migrations:up`       | Run pending database migrations                       |
-| `npm run migrations:down`     | Rollback the last migration                           |
-| `npm run migrations:create`   | Create a new migration file                           |
-| `npm run commit`              | Create a commit using Commitizen                      |
+| Script                        | Description                                        |
+| ----------------------------- | -------------------------------------------------- |
+| `npm run dev`                 | Start all services and launch the dev server       |
+| `npm test`                    | Run the test suite (starts services automatically) |
+| `npm run test:watch`          | Run tests in watch mode                            |
+| `npm run lint:prettier:check` | Check code formatting with Prettier                |
+| `npm run lint:prettier:fix`   | Auto-fix formatting with Prettier                  |
+| `npm run lint:eslint:check`   | Run ESLint checks                                  |
+| `npm run services:up`         | Start infrastructure containers only               |
+| `npm run services:stop`       | Pause containers (preserves data)                  |
+| `npm run services:down`       | Remove containers and networks                     |
+| `npm run migrations:up`       | Run pending database migrations                    |
+| `npm run migrations:down`     | Rollback the last migration                        |
+| `npm run migrations:create`   | Create a new migration file                        |
+| `npm run commit`              | Create a commit using Commitizen                   |
 
 ---
 
 ## Testing
 
-Integration tests run against a live Next.js server backed by PostgreSQL. The test suite starts all services automatically:
+Tests run against a live Next.js server backed by PostgreSQL and MailCatcher — no mocks. The test suite starts all services automatically:
 
 ```bash
 npm test
@@ -102,7 +108,7 @@ For development with watch mode:
 npm run test:watch
 ```
 
-> Tests use `--runInBand` to run sequentially. The test orchestrator (`tests/orchestrator.js`) resets the database between suites to ensure a clean state.
+> Tests use `--runInBand` to run sequentially. The test orchestrator (`tests/orchestrator.js`) resets the database between suites to ensure a clean state, and unit tests for pure modules live under `tests/unit/`.
 
 ---
 
@@ -111,26 +117,40 @@ npm run test:watch
 ```
 .
 ├── infra/
-│   ├── compose.yaml          # Docker Compose for PostgreSQL
-│   ├── database.js            # Database client (pg)
-│   ├── migrations/            # Database migration files
-│   └── scripts/
-│       └── wait-for-postgres.js
+│   ├── compose.yaml             # PostgreSQL + MailCatcher
+│   ├── controller.js            # Shared route middleware (auth, error handling)
+│   ├── database.js              # Database client (pg)
+│   ├── errors.js                # Error classes with Portuguese user-facing messages
+│   ├── mailer.js                # SMTP client (nodemailer)
+│   ├── webserver.js             # Origin/URL helpers
+│   ├── migrations/              # node-pg-migrate files
+│   └── scripts/                 # Dev/test orchestration helpers
+├── models/
+│   ├── activation.js            # Account activation tokens + email
+│   ├── authentication.js        # Email + password auth (timing-safe)
+│   ├── authorization.js         # Feature-based permissions + output filtering
+│   ├── migrator.js              # Migration runner wrapper
+│   ├── password.js              # bcryptjs hashing/compare
+│   ├── session.js               # Session creation, lookup, refresh, expiry
+│   ├── status.js                # System health
+│   └── user.js                  # User CRUD + features
 ├── pages/
-│   ├── index.js               # Homepage
-│   ├── status/
-│   │   └── index.js           # System status page
+│   ├── index.js                 # Homepage Placeholder (in construction)
+│   ├── status/index.js          # System status page
 │   └── api/v1/
-│       ├── status/index.js    # GET /api/v1/status
-│       └── migrations/index.js # GET|POST /api/v1/migrations
+│       ├── activations/[token]/ # PATCH — activate user from token
+│       ├── migrations/          # GET|POST — pending migrations
+│       ├── sessions/            # POST|DELETE — login / logout
+│       ├── status/              # GET — system status
+│       ├── user/                # GET — current user (refreshes session)
+│       └── users/               # POST — register; GET|PATCH /[username]
 ├── tests/
-│   ├── orchestrator.js        # Test setup and DB helpers
-│   └── integration/
-│       └── api/v1/
-│           ├── status/        # Status endpoint tests
-│           └── migrations/    # Migration endpoint tests
-├── .env.development           # Local environment variables
-├── jest.config.js             # Jest configuration
+│   ├── orchestrator.js          # Shared helpers, DB reset, mailcatcher utils
+│   ├── setup-jest.js            # Per-test advisory lock
+│   ├── integration/             # API + flow tests against the live stack
+│   └── unit/                    # Pure-module unit tests
+├── .env.development             # Local environment variables
+├── jest.config.js               # Jest configuration
 └── package.json
 ```
 
@@ -138,11 +158,20 @@ npm run test:watch
 
 ## API Endpoints
 
-| Method | Endpoint             | Description                             |
-| ------ | -------------------- | --------------------------------------- |
-| GET    | `/api/v1/status`     | Returns system health and database info |
-| GET    | `/api/v1/migrations` | Lists pending migrations (dry run)      |
-| POST   | `/api/v1/migrations` | Executes pending migrations             |
+| Method | Endpoint                      | Required feature        | Description                                                |
+| ------ | ----------------------------- | ----------------------- | ---------------------------------------------------------- |
+| GET    | `/api/v1/status`              | `read:status`           | System health and database info                            |
+| GET    | `/api/v1/migrations`          | `read:migration`        | Lists pending migrations (dry run)                         |
+| POST   | `/api/v1/migrations`          | `create:migration`      | Executes pending migrations                                |
+| POST   | `/api/v1/users`               | `create:user`           | Register a new user                                        |
+| GET    | `/api/v1/users/[username]`    | —                       | Public user profile by username                            |
+| PATCH  | `/api/v1/users/[username]`    | `update:user`           | Update a user (self; others requires `update:user:others`) |
+| GET    | `/api/v1/user`                | `read:session`          | Current authenticated user (refreshes session cookie)      |
+| POST   | `/api/v1/sessions`            | `create:session`        | Log in (email + password)                                  |
+| DELETE | `/api/v1/sessions`            | valid session cookie    | Log out (expires the session)                              |
+| PATCH  | `/api/v1/activations/[token]` | `read:activation_token` | Activate an account from an emailed token                  |
+
+Authorization is feature-based: each user row has a `features: varchar[]` column, and routes are gated by named features rather than roles. Defaults are applied for anonymous, unactivated, and activated users; additional features can be granted per user.
 
 ---
 
