@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+import { ServiceError } from "infra/errors.js";
 
 export { sendMail };
 
@@ -13,5 +14,14 @@ const transporter = createTransport({
 });
 
 async function sendMail(mailOptions) {
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    throw new ServiceError({
+      cause: error,
+      message: "Erro ao enviar email.",
+      action: "Verifique se o serviço de email está disponível.",
+      context: mailOptions,
+    });
+  }
 }

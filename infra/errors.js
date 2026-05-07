@@ -4,6 +4,7 @@ function serializeError(error, extra = {}) {
     status_code: error.statusCode,
     message: error.message,
     action: error.action,
+    context: error.context,
     ...extra,
   };
 }
@@ -36,11 +37,12 @@ class MethodNotAllowedError extends Error {
 }
 
 class ServiceError extends Error {
-  constructor({ cause, message }) {
+  constructor({ cause, message, action, context }) {
     super(message || "Ocorreu um erro ao executar o serviço.", { cause });
     this.name = "ServiceError";
-    this.action = "Verifique se o serviço está disponível.";
+    this.action = action || "Verifique se o serviço está disponível.";
     this.statusCode = 503;
+    this.context = context;
   }
 
   toJSON() {
