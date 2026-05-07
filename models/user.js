@@ -6,8 +6,7 @@ import {
 } from "infra/errors.js";
 import { sendActivationEmail } from "models/activation.js";
 import { comparePassword, hashObjectPassword } from "models/password.js";
-import { DEFAULT_UNACTIVATED_USER_FEATURES } from "models/authorization.js";
-import { isAuthorized } from "models/authorization.js";
+import { PERMISSIONS, isAuthorized } from "models/authorization.js";
 
 export {
   registerUser,
@@ -42,7 +41,7 @@ async function registerUser(userInputValues) {
 async function createUser(userInputValues) {
   const userInputWithDefaults = {
     ...userInputValues,
-    features: DEFAULT_UNACTIVATED_USER_FEATURES,
+    features: PERMISSIONS.default.unactivatedUser,
   };
   await validateUniqueUsername(userInputWithDefaults.username);
   await validateUniqueEmail(userInputWithDefaults.email);

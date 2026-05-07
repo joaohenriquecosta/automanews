@@ -4,10 +4,7 @@ import { randomBytes } from "crypto";
 import { getOrigin } from "infra/webserver.js";
 import { ForbiddenError, ValidationError } from "infra/errors.js";
 import { getUserById } from "models/user.js";
-import {
-  isAuthorized,
-  DEFAULT_ACTIVATED_USER_FEATURES,
-} from "models/authorization.js";
+import { PERMISSIONS, isAuthorized } from "models/authorization.js";
 
 const baseUrl = getOrigin();
 const ACTIVATION_TOKEN_LIFETIME_MS = 1000 * 60 * 15; // 15 minutes
@@ -79,7 +76,7 @@ async function activateUserByToken(token) {
 async function activateUserById(userId) {
   return await updateUserFeaturesByIdQuery(
     userId,
-    DEFAULT_ACTIVATED_USER_FEATURES,
+    PERMISSIONS.default.activatedUser,
   );
 }
 

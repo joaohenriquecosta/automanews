@@ -9,10 +9,7 @@ import {
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { comparePassword } from "models/password";
-import {
-  DEFAULT_ACTIVATED_USER_FEATURES,
-  DEFAULT_UNACTIVATED_USER_FEATURES,
-} from "models/authorization.js";
+import { PERMISSIONS } from "models/authorization.js";
 import { addFeatures } from "models/user.js";
 
 beforeAll(async () => {
@@ -208,7 +205,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       expect(responseBody).toEqual({
         id: userInDatabase.id,
         username: validUserInputValues.username,
-        features: DEFAULT_ACTIVATED_USER_FEATURES,
+        features: PERMISSIONS.default.activatedUser,
         created_at: userInDatabase.created_at,
         updated_at: userInDatabase.updated_at,
       });
@@ -260,7 +257,7 @@ describe("PATCH /api/v1/users/[username]", () => {
   describe("Privileged user", () => {
     let privilegedUser, session, otherUser;
     const privilegedFeatures = [
-      ...DEFAULT_ACTIVATED_USER_FEATURES,
+      ...PERMISSIONS.default.activatedUser,
       "update:user:others",
     ];
 
@@ -311,7 +308,7 @@ describe("PATCH /api/v1/users/[username]", () => {
           username: "patched_privileged_target",
           email: "patched.privileged.target@test.dev",
         },
-        expectedFeatures: DEFAULT_UNACTIVATED_USER_FEATURES,
+        expectedFeatures: PERMISSIONS.default.unactivatedUser,
       },
     ])(
       "Updates $testName with valid input",

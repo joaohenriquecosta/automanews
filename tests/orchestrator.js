@@ -4,7 +4,7 @@ import { createUser, getUserByUsername } from "models/user";
 import { getOrigin } from "infra/webserver.js";
 import { randomBytes } from "node:crypto";
 import { SESSION_LIFETIME_MS } from "models/session.js";
-import { DEFAULT_ACTIVATED_USER_FEATURES } from "models/authorization.js";
+import { PERMISSIONS } from "models/authorization.js";
 
 const testBaseUrl = getOrigin();
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
@@ -122,7 +122,7 @@ async function activateUser(userId) {
       RETURNING
         *
     ;`,
-    values: [userId, DEFAULT_ACTIVATED_USER_FEATURES],
+    values: [userId, PERMISSIONS.default.activatedUser],
   });
 
   return serializePublicUser(result.rows[0]);

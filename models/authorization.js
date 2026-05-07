@@ -1,24 +1,31 @@
-const DEFAULT_ANONYMOUS_USER_FEATURES = [
-  "read:activation_token",
-  "create:session",
-  "create:user",
-];
-const DEFAULT_UNACTIVATED_USER_FEATURES = ["read:activation_token"];
-const DEFAULT_ACTIVATED_USER_FEATURES = [
-  "create:session",
-  "read:session",
-  "update:user",
-];
+import { InternalServerError } from "infra/errors.js";
 
-export {
-  isAuthorized,
-  filterOutput,
-  DEFAULT_ANONYMOUS_USER_FEATURES,
-  DEFAULT_UNACTIVATED_USER_FEATURES,
-  DEFAULT_ACTIVATED_USER_FEATURES,
+const PERMISSIONS = {
+  default: {
+    anonymousUser: ["read:activation_token", "create:session", "create:user"],
+    unactivatedUser: ["read:activation_token"],
+    activatedUser: ["create:session", "read:session", "update:user"],
+  },
+  catalog: {
+    user: [
+      "create:user",
+      "read:user",
+      "read:user:self",
+      "update:user",
+      "update:user:others",
+    ],
+    session: ["create:session", "read:session"],
+    activation_token: ["read:activation_token"],
+    migration: ["read:migration", "create:migration"],
+    status: ["read:status", "read:status:all"],
+  },
 };
 
+export { isAuthorized, filterOutput, PERMISSIONS };
+
 function isAuthorized(user, feature, resource) {
+  validateUser(user);
+  validateFeature(feature);
   if (feature === "update:user") {
     if (!resource || !user.features.includes("update:user")) {
       return false;
@@ -32,6 +39,10 @@ function isAuthorized(user, feature, resource) {
 }
 
 function filterOutput(user, feature, resource) {
+  validateUser(user);
+  validateFeature(feature);
+  validateResource(resource);
+
   if (feature === "read:user") {
     return {
       id: resource.id,
@@ -100,4 +111,42 @@ function filterOutput(user, feature, resource) {
     return output;
   }
   return resource;
+}
+
+function validateUser(user) {
+  if (!user || !user.features) {
+    throw new InternalServerError({
+      cause: new Error(
+        "Model `authorization.js` requires a `user` object with `features`.",
+      ),
+    });
+  }
+}
+
+function validateFeature(feature) {
+  if (!feature) {
+    throw new InternalServerError({
+      cause: new Error("Model `authorization.js` requires a valid `feature`."),
+    });
+  }
+
+  for (const group of Object.values(PERMISSIONS)) {
+    for (const features of Object.values(group)) {
+      if (features.includes(feature)) {
+        return;
+      }
+    }
+  }
+
+  throw new InternalServerError({
+    cause: new Error("Model `authorization.js` requires a valid `feature`."),
+  });
+}
+
+function validateResource(resource) {
+  if (!resource) {
+    throw new InternalServerError({
+      cause: new Error("Model `authorization.js` requires a valid `resource`."),
+    });
+  }
 }

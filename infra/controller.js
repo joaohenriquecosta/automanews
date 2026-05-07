@@ -10,10 +10,7 @@ import {
 import { serialize as serializeCookie } from "cookie";
 import { SESSION_LIFETIME_MS, getValidSessionByToken } from "models/session.js";
 import { getUserById, serializePublicUser } from "models/user.js";
-import {
-  isAuthorized,
-  DEFAULT_ANONYMOUS_USER_FEATURES,
-} from "models/authorization.js";
+import { isAuthorized, PERMISSIONS } from "models/authorization.js";
 
 export {
   exceptionHandlers,
@@ -66,7 +63,7 @@ async function injectAuthenticatedUser(request) {
 
 function injectAnonymousUser(request) {
   request.context.user = {
-    features: DEFAULT_ANONYMOUS_USER_FEATURES,
+    features: PERMISSIONS.default.anonymousUser,
   };
 }
 
