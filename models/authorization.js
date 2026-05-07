@@ -2,7 +2,12 @@ import { InternalServerError } from "infra/errors.js";
 
 const PERMISSIONS = {
   default: {
-    anonymousUser: ["read:activation_token", "create:session", "create:user"],
+    anonymousUser: [
+      "read:activation_token",
+      "create:session",
+      "create:user",
+      "read:status",
+    ],
     unactivatedUser: ["read:activation_token"],
     activatedUser: ["create:session", "read:session", "update:user"],
   },
