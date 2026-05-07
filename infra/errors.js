@@ -16,8 +16,9 @@ class InternalServerError extends Error {
     this.statusCode = statusCode || 500;
   }
 
+  /** Omit `cause` so internal details (e.g. model validation) never reach clients. */
   toJSON() {
-    return serializeError(this, { cause: this.cause?.toJSON?.() });
+    return serializeError(this);
   }
 }
 
