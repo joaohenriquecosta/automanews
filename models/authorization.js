@@ -9,7 +9,12 @@ const PERMISSIONS = {
       "read:status",
     ],
     unactivatedUser: ["read:activation_token"],
-    activatedUser: ["create:session", "read:session", "update:user"],
+    activatedUser: [
+      "create:session",
+      "read:session",
+      "update:user",
+      "read:status",
+    ],
   },
   catalog: {
     user: [
