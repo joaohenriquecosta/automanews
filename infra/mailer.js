@@ -21,7 +21,10 @@ async function sendMail(mailOptions) {
       cause: error,
       message: "Erro ao enviar email.",
       action: "Verifique se o serviço de email está disponível.",
-      context: mailOptions,
+      context: {
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+      },
     });
   }
 }
