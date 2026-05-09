@@ -10,15 +10,11 @@ import {
 import { createRouter } from "next-connect";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.get(canRequest("read:migration"), getHandler);
-router.post(canRequest("create:migration"), postHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .get(canRequest("read:migration"), getHandler)
+  .post(canRequest("create:migration"), postHandler)
+  .handler({ ...exceptionHandlers });
 
 async function getHandler(request, response) {
   const pendingMigrations = await listPendingMigrations();

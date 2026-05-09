@@ -6,14 +6,10 @@ import {
 import { createRouter } from "next-connect";
 import { registerUser } from "models/user.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.post(canRequest("create:user"), postHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .post(canRequest("create:user"), postHandler)
+  .handler({ ...exceptionHandlers });
 
 async function postHandler(request, response) {
   const registration = await registerUser(request.body);

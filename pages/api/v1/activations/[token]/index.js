@@ -4,14 +4,10 @@ import { activateUserByToken } from "models/activation.js";
 import { loadCurrentUser, canRequest } from "infra/controller.js";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.patch(canRequest("read:activation_token"), patchHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .patch(canRequest("read:activation_token"), patchHandler)
+  .handler({ ...exceptionHandlers });
 
 async function patchHandler(request, response) {
   const { token } = request.query;

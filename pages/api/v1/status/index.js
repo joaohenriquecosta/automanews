@@ -7,14 +7,10 @@ import { createRouter } from "next-connect";
 import { getSystemStatus } from "models/status.js";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.get(canRequest("read:status"), getHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .get(canRequest("read:status"), getHandler)
+  .handler({ ...exceptionHandlers });
 
 async function getHandler(request, response) {
   const dbStatus = await getSystemStatus();
