@@ -11,22 +11,18 @@ import {
   getValidSessionByToken,
   expireSessionById,
 } from "models/session.js";
-import { getAuthenticatedUser } from "models/authentication.js";
+import { getUser } from "models/authentication.js";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.post(canRequest("create:session"), postHandler);
-router.delete(deleteHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .post(canRequest("create:session"), postHandler)
+  .delete(deleteHandler)
+  .handler({ ...exceptionHandlers });
 
 async function postHandler(request, response) {
   const { email, password } = request.body ?? {};
-  const user = await getAuthenticatedUser(email, password);
+  const user = await getUser(email, password);
   const newSession = await createSession(user.id);
 
   setSessionCookie(newSession.token, response);

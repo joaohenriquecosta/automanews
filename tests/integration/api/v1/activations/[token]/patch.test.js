@@ -120,7 +120,7 @@ describe("PATCH /api/v1/activations/[token]", () => {
       expect(Date.parse(usedActivationToken.used_at)).not.toBeNaN();
     });
 
-    test("Returns ValidationError when the token does not exist", async () => {
+    test("Returns `ValidationError` when the token does not exist", async () => {
       expect.assertions(2);
       const { response, responseBody } = await patchActivationToken(
         "non-existent-activation-token",
@@ -129,7 +129,7 @@ describe("PATCH /api/v1/activations/[token]", () => {
       expectInvalidActivationToken(response, responseBody);
     });
 
-    test("Returns ValidationError when the token is expired", async () => {
+    test("Returns `ValidationError` when the token is expired", async () => {
       expect.assertions(3);
       const { activationToken } = await createActivationTokenForUser({
         username: "expired_activation_patch",
@@ -145,7 +145,7 @@ describe("PATCH /api/v1/activations/[token]", () => {
       expectInvalidActivationToken(response, responseBody);
     });
 
-    test("Returns ForbiddenError when the target user cannot read activation tokens", async () => {
+    test("Returns `ForbiddenError` when the target user cannot read activation tokens", async () => {
       const { user: targetUser, activationToken } =
         await createActivationTokenForUser({
           username: "target_without_read_token",

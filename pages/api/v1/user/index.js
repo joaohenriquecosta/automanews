@@ -9,14 +9,10 @@ import {
 } from "infra/controller.js";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.get(canRequest("read:session"), getHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .get(canRequest("read:session"), getHandler)
+  .handler({ ...exceptionHandlers });
 
 async function getHandler(request, response) {
   const token = request.cookies.session_id;

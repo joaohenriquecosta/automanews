@@ -7,15 +7,11 @@ import { createRouter } from "next-connect";
 import { getUserByUsername, updateUser } from "models/user.js";
 import { filterOutput } from "models/authorization.js";
 
-const router = createRouter();
-
-router.use(loadCurrentUser);
-router.get(getHandler);
-router.patch(canRequest("update:user", getTargetUser), patchHandler);
-
-export default router.handler({
-  ...exceptionHandlers,
-});
+export default createRouter()
+  .use(loadCurrentUser)
+  .get(getHandler)
+  .patch(canRequest("update:user", getTargetUser), patchHandler)
+  .handler({ ...exceptionHandlers });
 
 async function getHandler(request, response) {
   const { username } = request.query;

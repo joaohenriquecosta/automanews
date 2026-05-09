@@ -24,7 +24,7 @@ beforeEach(async () => {
 
 describe("POST /api/v1/sessions", () => {
   describe("Anonymous user", () => {
-    test("Returns ValidationError when email or password are not provided", async () => {
+    test("Returns `ValidationError` when `email` or `password` are not provided", async () => {
       const { response, responseBody } = await postSession({});
       expect(response.status).toBe(400);
       expect(responseBody).toEqual({
@@ -35,7 +35,7 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("Creates a session when email and password are valid", async () => {
+    test("Creates a session when `email` and `password` are valid", async () => {
       const existingUser = {
         username: "session_user",
         email: "session_user@test.dev",
@@ -89,7 +89,7 @@ describe("POST /api/v1/sessions", () => {
       );
     });
 
-    test("Returns AuthenticationError when the password is wrong", async () => {
+    test("Returns `AuthenticationError` when the `password` is wrong", async () => {
       await createDummyUser({
         username: "wrong_pass_user",
         email: "wrong_pass@test.dev",
@@ -110,7 +110,7 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("Returns AuthenticationError when the email is not registered (same message as wrong password)", async () => {
+    test("Returns `AuthenticationError` when the `email` is not registered (same message as wrong `password`)", async () => {
       const { response, responseBody } = await postSession({
         email: "nobody@test.dev",
         password: "any_password",
@@ -127,7 +127,7 @@ describe("POST /api/v1/sessions", () => {
   });
 
   describe("Standard user", () => {
-    test("Returns ForbiddenError when the user cannot create sessions", async () => {
+    test("Returns `ForbiddenError` when the user cannot create sessions", async () => {
       const existingUser = await createDummyUser({
         username: "user_without_create_session",
         email: "user_without_create_session@test.dev",

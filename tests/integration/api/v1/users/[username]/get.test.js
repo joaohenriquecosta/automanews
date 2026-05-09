@@ -22,7 +22,7 @@ describe("GET /api/v1/users/[username]", () => {
     });
 
     describe("With exact case match", () => {
-      test("'dummy_user' is retrieved successfully and returned the correct data", async () => {
+      test("`dummy_user` is retrieved successfully and returned the correct data", async () => {
         const { username } = dummyUser;
 
         const response = await fetch(`${testBaseUrl}/api/v1/users/${username}`);
@@ -44,7 +44,7 @@ describe("GET /api/v1/users/[username]", () => {
       });
     });
     describe("With case mismatch", () => {
-      test("'DUMMY_USER' is retrieved successfully and returned the correct data", async () => {
+      test("`DUMMY_USER` is retrieved successfully and returned the correct data", async () => {
         const uppercaseUsername = dummyUser.username.toUpperCase();
         const response = await fetch(
           `${testBaseUrl}/api/v1/users/${uppercaseUsername}`,
@@ -67,7 +67,7 @@ describe("GET /api/v1/users/[username]", () => {
       });
     });
     describe("With non-existent username", () => {
-      test("'non_existent_user' returns 404 Not Found", async () => {
+      test("`non_existent_user` returns 404 Not Found", async () => {
         const nonExistentUsername = "non_existent_user";
         const response = await fetch(
           `${testBaseUrl}/api/v1/users/${nonExistentUsername}`,
