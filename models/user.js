@@ -22,19 +22,39 @@ export {
 /* ── Public API ────────────────────────────────────── */
 
 async function registerUser(userInputValues) {
+  let newUser;
   try {
-    const newUser = await createUser(userInputValues);
-    await sendActivationEmail(newUser);
-    return {
-      statusCode: 201,
-      body: serializePublicUser(newUser),
-    };
+    newUser = await createUser(userInputValues);
   } catch (error) {
     if (!(error instanceof ValidationError)) {
       throw error;
     }
 
     return await handlePendingRegistration(userInputValues, error);
+  }
+
+  try {
+    await sendActivationEmail(newUser);
+  } catch (error) {
+    await rollbackUserRegistration(newUser.id);
+    throw error;
+  }
+
+  return {
+    statusCode: 201,
+    body: serializePublicUser(newUser),
+  };
+}
+
+async function rollbackUserRegistration(userId) {
+  try {
+    await deleteActivationTokensByUserIdQuery(userId);
+    await deleteUserByIdQuery(userId);
+  } catch (cleanupError) {
+    console.error(
+      `Failed to roll back registration for user ${userId}`,
+      cleanupError,
+    );
   }
 }
 
@@ -378,6 +398,20 @@ async function appendDistinctUserFeaturesByIdQuery(userId, featuresToAdd) {
   });
 
   return result.rows[0];
+}
+
+async function deleteUserByIdQuery(userId) {
+  await query({
+    text: `DELETE FROM users WHERE id = $1;`,
+    values: [userId],
+  });
+}
+
+async function deleteActivationTokensByUserIdQuery(userId) {
+  await query({
+    text: `DELETE FROM user_activation_tokens WHERE user_id = $1;`,
+    values: [userId],
+  });
 }
 
 async function hasValidActivationTokenForUserQuery(userId) {
