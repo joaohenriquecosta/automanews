@@ -6,9 +6,9 @@ import {
 import { comparePassword, getAuthDummyPasswordHash } from "models/password.js";
 import { getUserByEmail } from "models/user.js";
 
-export { getAuthenticatedUser };
+export { getUser };
 
-async function getAuthenticatedUser(providedEmail, providedPassword) {
+async function getUser(providedEmail, providedPassword) {
   if (
     typeof providedEmail !== "string" ||
     typeof providedPassword !== "string" ||
