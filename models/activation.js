@@ -20,7 +20,7 @@ async function sendActivationEmail(user) {
     activationTokenValue,
   );
   await sendMail({
-    from: "<contato@app.automanews.com.br>",
+    from: "AutomaNews <contato@app.automanews.com.br>",
     to: `<${user.email}>`,
     subject: "Ative a sua conta no AutomaNews!",
     text: createActivationEmailText(user, createdToken),
