@@ -17,7 +17,7 @@ beforeAll(async () => {
 
 describe("POST /api/v1/migrations", () => {
   describe("Anonymous user", () => {
-    test("Returns ForbiddenError", async () => {
+    test("Returns `ForbiddenError`", async () => {
       const response = await fetch(`${testBaseUrl}/api/v1/migrations`, {
         method: "POST",
       });
@@ -34,7 +34,7 @@ describe("POST /api/v1/migrations", () => {
   });
 
   describe("Standard user", () => {
-    test("Returns ForbiddenError", async () => {
+    test("Returns `ForbiddenError`", async () => {
       const dummyUser = await createDummyUser({
         username: "migrations_post_standard_user",
         email: "migrations.post.standard@test.dev",
@@ -60,7 +60,7 @@ describe("POST /api/v1/migrations", () => {
     });
   });
 
-  describe('Privileged user with "create:migration" feature', () => {
+  describe("Privileged user with `create:migration` feature", () => {
     test("Returns 200 when migrations are applied", async () => {
       const dummyUser = await createDummyUser({
         username: "migrations_post_priv_user",

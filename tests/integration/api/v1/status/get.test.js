@@ -70,8 +70,8 @@ describe("GET /api/v1/status", () => {
     });
   });
 
-  describe('Privileged user with "read:status:all" feature', () => {
-    test('Returns database version when user has "read:status:all" feature', async () => {
+  describe("Privileged user with `read:status:all` feature", () => {
+    test("Returns database version when user has `read:status:all` feature", async () => {
       const dummyUser = await createDummyUser({
         username: "status_get_priv_all_user",
         email: "status.get.priv.all@test.dev",

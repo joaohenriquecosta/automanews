@@ -17,7 +17,7 @@ beforeAll(async () => {
 
 describe("GET /api/v1/migrations", () => {
   describe("Anonymous user", () => {
-    test("Returns ForbiddenError", async () => {
+    test("Returns `ForbiddenError`", async () => {
       const response = await fetch(`${testBaseUrl}/api/v1/migrations`);
 
       expect(response.status).toBe(403);
@@ -33,7 +33,7 @@ describe("GET /api/v1/migrations", () => {
     });
   });
   describe("Standard user", () => {
-    test("Returns ForbiddenError", async () => {
+    test("Returns `ForbiddenError`", async () => {
       const dummyUser = await createDummyUser({
         username: "migrations_get_standard_user",
         email: "migrations.get.standard@test.dev",
@@ -59,7 +59,7 @@ describe("GET /api/v1/migrations", () => {
       });
     });
   });
-  describe('Privileged user with "read:migration" feature', () => {
+  describe("Privileged user with `read:migration` feature", () => {
     test("Returns empty list when there are no pending migrations", async () => {
       const dummyUser = await createDummyUser({
         username: "migrations_get_privileged_user",

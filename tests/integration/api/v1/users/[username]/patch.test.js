@@ -126,7 +126,7 @@ const DUPLICATED_FIELD_CASES = [
 
 describe("PATCH /api/v1/users/[username]", () => {
   describe("Anonymous user", () => {
-    test("Receives NotFoundError when the target user does not exist", async () => {
+    test("Receives `NotFoundError` when the target user does not exist", async () => {
       expect.assertions(2);
       const nonExistentUsername = "non_existent_user";
 
@@ -168,7 +168,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
-    test("Receives NotFoundError when the target user does not exist", async () => {
+    test("Receives `NotFoundError` when the target user does not exist", async () => {
       expect.assertions(2);
       const nonExistentUsername = "non_existent_user";
 
@@ -276,7 +276,7 @@ describe("PATCH /api/v1/users/[username]", () => {
       });
     });
 
-    test("Receives NotFoundError when the target user does not exist", async () => {
+    test("Receives `NotFoundError` when the target user does not exist", async () => {
       expect.assertions(2);
       const nonExistentUsername = "non_existent_user";
 
