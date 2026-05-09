@@ -2,8 +2,11 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  activateUser,
+  createSessionForUser,
   getUser,
   postSession,
+  testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { validate as uuidValidate, version as uuidVersion } from "uuid";
@@ -38,7 +41,8 @@ describe("POST /api/v1/sessions", () => {
         email: "session_user@test.dev",
         password: "correct_horse_battery",
       };
-      await createDummyUser(existingUser);
+      const createdUser = await createDummyUser(existingUser);
+      await activateUser(createdUser.id);
 
       const { response, responseBody } = await postSession({
         email: existingUser.email,
@@ -118,6 +122,39 @@ describe("POST /api/v1/sessions", () => {
         status_code: 401,
         message: "Email ou senha inválidos.",
         action: "Verifique se o email e a senha fornecidos são válidos.",
+      });
+    });
+  });
+
+  describe("Standard user", () => {
+    test("Returns ForbiddenError when the user cannot create sessions", async () => {
+      const existingUser = await createDummyUser({
+        username: "user_without_create_session",
+        email: "user_without_create_session@test.dev",
+        password: "password",
+      });
+      const session = await createSessionForUser(existingUser.id);
+
+      const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: `session_id=${session.token}`,
+        },
+        body: JSON.stringify({
+          email: existingUser.email,
+          password: "password",
+        }),
+      });
+
+      const responseBody = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(responseBody).toEqual({
+        name: "ForbiddenError",
+        status_code: 403,
+        message: "Você não possui permissão para executar esta ação.",
+        action: 'Verifique se o seu usuário possui a feature "create:session"',
       });
     });
   });

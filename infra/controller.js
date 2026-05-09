@@ -3,18 +3,69 @@ import {
   InternalServerError,
   MethodNotAllowedError,
   NotFoundError,
+  ForbiddenError,
   ServiceError,
   ValidationError,
 } from "infra/errors.js";
 import { serialize as serializeCookie } from "cookie";
-import { SESSION_LIFETIME_MS } from "models/session.js";
+import { SESSION_LIFETIME_MS, getValidSessionByToken } from "models/session.js";
+import { getUserById, serializePublicUser } from "models/user.js";
+import { isAuthorized, PERMISSIONS } from "models/authorization.js";
 
-export { exceptionHandlers, setSessionCookie, clearSessionCookie };
+export {
+  exceptionHandlers,
+  setSessionCookie,
+  clearSessionCookie,
+  loadCurrentUser,
+  canRequest,
+};
 
 const exceptionHandlers = {
   onNoMatch: onNoMatchHandler,
   onError: onErrorHandler,
 };
+
+async function loadCurrentUser(request, response, next) {
+  request.context = request.context || {};
+  request.cookies?.session_id
+    ? await injectAuthenticatedUser(request)
+    : injectAnonymousUser(request);
+  return next();
+}
+
+function canRequest(feature, getResource) {
+  return async function canRequestMiddleware(request, response, next) {
+    const user = request.context.user;
+    const resource = getResource ? await getResource(request) : undefined;
+
+    if (isAuthorized(user, feature, resource)) {
+      if (resource) {
+        request.context.resource = resource;
+      }
+
+      return next();
+    }
+
+    throw new ForbiddenError({
+      cause: new Error(`Missing feature ${feature}`),
+      message: `Você não possui permissão para executar esta ação.`,
+      action: `Verifique se o seu usuário possui a feature "${feature}"`,
+    });
+  };
+}
+
+async function injectAuthenticatedUser(request) {
+  const token = request.cookies.session_id;
+  const session = await getValidSessionByToken(token);
+  const user = await getUserById(session.user_id);
+  request.context.user = serializePublicUser(user);
+}
+
+function injectAnonymousUser(request) {
+  request.context.user = {
+    features: PERMISSIONS.default.anonymousUser,
+  };
+}
 
 function onNoMatchHandler(request, response) {
   const methodNotAllowed = new MethodNotAllowedError();
@@ -27,6 +78,7 @@ function onErrorHandler(error, request, response) {
     ServiceError,
     MethodNotAllowedError,
     NotFoundError,
+    ForbiddenError,
   ];
 
   if (error instanceof AuthenticationError) {
@@ -36,7 +88,9 @@ function onErrorHandler(error, request, response) {
 
   for (const errorType of COMMON_ERRORS) {
     if (error instanceof errorType) {
-      console.error(error);
+      if (error.statusCode >= 500) {
+        console.error(error);
+      }
       return response.status(error.statusCode).json(error);
     }
   }

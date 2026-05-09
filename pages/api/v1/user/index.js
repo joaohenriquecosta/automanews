@@ -1,12 +1,18 @@
 import { exceptionHandlers } from "infra/controller.js";
 import { createRouter } from "next-connect";
 import { getValidSessionByToken, refreshSession } from "models/session.js";
-import { getUserById, serializePublicUser } from "models/user.js";
-import { setSessionCookie } from "infra/controller.js";
+import { getUserById } from "models/user.js";
+import {
+  setSessionCookie,
+  loadCurrentUser,
+  canRequest,
+} from "infra/controller.js";
+import { filterOutput } from "models/authorization.js";
 
 const router = createRouter();
 
-router.get(getHandler);
+router.use(loadCurrentUser);
+router.get(canRequest("read:session"), getHandler);
 
 export default router.handler({
   ...exceptionHandlers,
@@ -18,12 +24,19 @@ async function getHandler(request, response) {
   const refreshedSession = await refreshSession(session.id);
 
   setSessionCookie(refreshedSession.token, response);
-  const user = await getUserById(refreshedSession.user_id);
+  const userFound = await getUserById(refreshedSession.user_id);
 
   response.setHeader(
     "Cache-Control",
     "no-store, no-cache, max-age=0, must-revalidate",
   );
 
-  return response.status(200).json(serializePublicUser(user));
+  const userRequesting = request.context.user;
+  const secureOutput = filterOutput(
+    userRequesting,
+    "read:user:self",
+    userFound,
+  );
+
+  return response.status(200).json(secureOutput);
 }

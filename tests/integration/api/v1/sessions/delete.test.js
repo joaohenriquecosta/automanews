@@ -2,6 +2,7 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  activateUser,
   testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
@@ -21,10 +22,8 @@ describe("DELETE /api/v1/sessions", () => {
   describe("Standard user", () => {
     test("With valid session token", async () => {
       dummyUser = await createDummyUser({ password: "password" });
-      const session = await createSession({
-        email: dummyUser.email,
-        password: "password",
-      });
+      dummyUser = await activateUser(dummyUser.id);
+      const session = await createSession(dummyUser.id);
       const response = await fetch(`${testBaseUrl}/api/v1/sessions`, {
         method: "DELETE",
         headers: {
@@ -105,10 +104,7 @@ describe("DELETE /api/v1/sessions", () => {
     jest.useFakeTimers({
       now: new Date(Date.now() - SESSION_LIFETIME_MS),
     });
-    const expiredSession = await createSession({
-      email: dummyUser.email,
-      password: "password",
-    });
+    const expiredSession = await createSession(dummyUser.id);
     jest.useRealTimers();
 
     const expiredSessionToken = expiredSession.token;

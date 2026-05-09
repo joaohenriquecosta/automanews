@@ -4,6 +4,7 @@ import {
   createDummyUser,
   serializePublicUser,
   testBaseUrl,
+  activateUser,
 } from "tests/orchestrator.js";
 import { randomBytes } from "node:crypto";
 import {
@@ -23,10 +24,8 @@ beforeAll(async () => {
   await clearDatabase();
   await runPendingMigrations();
   dummyUser = await createDummyUser({ password: "password" });
-  session = await createSession({
-    email: dummyUser.email,
-    password: "password",
-  });
+  dummyUser = await activateUser(dummyUser.id);
+  session = await createSession(dummyUser.id);
 });
 
 describe("GET /api/v1/user", () => {
@@ -76,10 +75,7 @@ describe("GET /api/v1/user", () => {
       jest.useFakeTimers({
         now: new Date(Date.now() - SESSION_LIFETIME_MS + timeToExpire),
       });
-      const almostExpiredSession = await createSession({
-        email: dummyUser.email,
-        password: "password",
-      });
+      const almostExpiredSession = await createSession(dummyUser.id);
       jest.useRealTimers();
 
       const almostExpiredSessionToken = almostExpiredSession.token;
@@ -147,10 +143,7 @@ describe("GET /api/v1/user", () => {
       jest.useFakeTimers({
         now: new Date(Date.now() - SESSION_LIFETIME_MS),
       });
-      const expiredSession = await createSession({
-        email: dummyUser.email,
-        password: "password",
-      });
+      const expiredSession = await createSession(dummyUser.id);
       jest.useRealTimers();
 
       const expiredSessionToken = expiredSession.token;
@@ -168,6 +161,21 @@ describe("GET /api/v1/user", () => {
         status_code: 401,
         message: "Sessão inválida.",
         action: "Faça login para continuar.",
+      });
+    });
+  });
+
+  describe("Anonymous user", () => {
+    test("Without session token", async () => {
+      const response = await fetch(`${testBaseUrl}/api/v1/user`);
+      const responseBody = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(responseBody).toEqual({
+        name: "ForbiddenError",
+        status_code: 403,
+        message: "Você não possui permissão para executar esta ação.",
+        action: 'Verifique se o seu usuário possui a feature "read:session"',
       });
     });
   });

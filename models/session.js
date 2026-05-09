@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { query } from "infra/database.js";
-import { getAuthenticatedUser } from "models/authentication.js";
-import { AuthenticationError } from "infra/errors.js";
+import { AuthenticationError, ForbiddenError } from "infra/errors.js";
+import { getUserById } from "models/user.js";
+import { isAuthorized } from "models/authorization.js";
 
 export {
   createSession,
@@ -13,8 +14,16 @@ export {
 
 const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
-async function createSession({ email, password }) {
-  const user = await getAuthenticatedUser(email, password);
+async function createSession(userId) {
+  const user = await getUserById(userId);
+  if (!isAuthorized(user, "create:session")) {
+    throw new ForbiddenError({
+      cause: new Error(`User ${user.id} cannot create sessions`),
+      message: "Você não possui permissão para criar sessões.",
+      action: "Ative sua conta ou entre em contato com o suporte.",
+    });
+  }
+
   const token = randomBytes(48).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MS);
   const session = await insertSessionQuery({
@@ -53,7 +62,7 @@ async function expireSessionByIdQuery(sessionId) {
         sessions
       SET
         expires_at = expires_at - INTERVAL '1 year',
-        updated_at = NOW()
+        updated_at = timezone('utc', now())
       WHERE
         id = $1
       RETURNING
@@ -88,7 +97,7 @@ async function getValidSessionByTokenQuery(token) {
         sessions
       WHERE
         token = $1
-        AND expires_at > NOW()
+        AND expires_at > timezone('utc', now())
       LIMIT
         1
     ;`,
@@ -104,7 +113,7 @@ async function refreshSessionExpirationDateQuery(sessionId, expiresAt) {
         sessions
       SET
         expires_at = $2,
-        updated_at = NOW()
+        updated_at = timezone('utc', now())
       WHERE
         id = $1
       RETURNING

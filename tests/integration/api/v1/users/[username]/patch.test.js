@@ -2,11 +2,15 @@ import {
   waitForAllServices,
   clearDatabase,
   createDummyUser,
+  activateUser,
+  createSessionForUser,
   getUser,
   testBaseUrl,
 } from "tests/orchestrator.js";
 import { runPendingMigrations } from "models/migrator.js";
 import { comparePassword } from "models/password";
+import { PERMISSIONS } from "models/authorization.js";
+import { addFeatures } from "models/user.js";
 
 beforeAll(async () => {
   await waitForAllServices();
@@ -17,11 +21,12 @@ beforeEach(async () => {
   await runPendingMigrations();
 });
 
-async function patchUser(username, userInputValues) {
+async function patchUser(username, userInputValues, sessionToken) {
   const response = await fetch(`${testBaseUrl}/api/v1/users/${username}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...(sessionToken ? { Cookie: `session_id=${sessionToken}` } : {}),
     },
     body: JSON.stringify(userInputValues),
   });
@@ -34,166 +39,341 @@ async function patchUser(username, userInputValues) {
   };
 }
 
-describe("PATCH /api/v1/users/[username]", () => {
-  describe("Existing user", () => {
-    let dummyUser, username;
+async function createActivatedUser(overrides = {}) {
+  const user = await createDummyUser(overrides);
+  return await activateUser(user.id);
+}
 
-    beforeEach(async () => {
-      dummyUser = await createDummyUser();
-      username = dummyUser.username;
+function expectForbiddenUpdateUser(response, responseBody) {
+  expect(response.status).toBe(403);
+  expect(responseBody).toEqual({
+    name: "ForbiddenError",
+    status_code: 403,
+    message: "Você não possui permissão para executar esta ação.",
+    action: 'Verifique se o seu usuário possui a feature "update:user"',
+  });
+}
+
+function expectUserNotFound(response, responseBody, username) {
+  expect(response.status).toBe(404);
+  expect(responseBody).toEqual({
+    name: "NotFoundError",
+    status_code: 404,
+    message: `Usuário ${username} não encontrado.`,
+    action: `Verifique se o usuário ${username} existe.`,
+  });
+}
+
+function expectEmptyInputValidationError(response, responseBody) {
+  expect(response.status).toBe(400);
+  expect(responseBody).toEqual({
+    name: "ValidationError",
+    status_code: 400,
+    message: "Nenhum campo foi enviado para atualização do usuário.",
+    action:
+      "Envie pelo menos um dos campos permitidos para atualização: username, email, password.",
+  });
+}
+
+function expectInvalidFieldValidationError(response, responseBody) {
+  expect(response.status).toBe(400);
+  expect(responseBody).toEqual({
+    name: "ValidationError",
+    status_code: 400,
+    message: "O campo role não é permitido para atualização do usuário.",
+    action:
+      "Envie somente campos permitidos para atualização: username, email, password.",
+  });
+}
+
+const DUPLICATED_FIELD_CASES = [
+  {
+    testName: "duplicated email",
+    existingUser: {
+      username: "existing_email_user",
+      email: "existing_email@test.dev",
+      password: "existing_email_password",
+    },
+    userInputValues: {
+      email: "EXISTING_EMAIL@TEST.DEV",
+    },
+    expectedError: {
+      name: "ValidationError",
+      status_code: 400,
+      message: "O email 'EXISTING_EMAIL@TEST.DEV' já está em uso.",
+      action: "Forneça um email novo ou faça login com o email já existente.",
+    },
+  },
+  {
+    testName: "duplicated username",
+    existingUser: {
+      username: "existing_username",
+      email: "existing_username@test.dev",
+      password: "existing_username_password",
+    },
+    userInputValues: {
+      username: "EXISTING_USERNAME",
+    },
+    expectedError: {
+      name: "ValidationError",
+      status_code: 400,
+      message: "O username 'EXISTING_USERNAME' já está em uso.",
+      action:
+        "Forneça um username novo ou faça login com o username já existente.",
+    },
+  },
+];
+
+describe("PATCH /api/v1/users/[username]", () => {
+  describe("Anonymous user", () => {
+    test("Receives NotFoundError when the target user does not exist", async () => {
+      expect.assertions(2);
+      const nonExistentUsername = "non_existent_user";
+
+      const { response, responseBody } = await patchUser(nonExistentUsername, {
+        email: "anonymous_update@test.dev",
+      });
+
+      expectUserNotFound(response, responseBody, nonExistentUsername);
     });
 
-    describe("With valid data", () => {
-      test("The user is updated successfully and returns updated user data", async () => {
-        const validUserInputValues = {
-          username: "patched_new_username",
-          email: "patched_new_email@test.dev",
-          password: "patched_new_password",
-        };
+    test("Does not update any user", async () => {
+      const targetUser = await createActivatedUser();
+
+      const { response, responseBody } = await patchUser(targetUser.username, {
+        email: "anonymous_update@test.dev",
+      });
+
+      expectForbiddenUpdateUser(response, responseBody);
+
+      const targetUserInDatabase = await getUser(targetUser.username);
+      expect(targetUserInDatabase.email).toBe(targetUser.email);
+    });
+  });
+
+  describe("Standard user", () => {
+    let standardUser, session, otherUser;
+
+    beforeEach(async () => {
+      standardUser = await createActivatedUser({
+        username: "standard_user",
+        email: "standard.user@test.dev",
+        password: "standard_user_password",
+      });
+      session = await createSessionForUser(standardUser.id);
+      otherUser = await createActivatedUser({
+        username: "other_user",
+        email: "other.user@test.dev",
+        password: "other_user_password",
+      });
+    });
+
+    test("Receives NotFoundError when the target user does not exist", async () => {
+      expect.assertions(2);
+      const nonExistentUsername = "non_existent_user";
+
+      const { response, responseBody } = await patchUser(
+        nonExistentUsername,
+        {
+          email: "standard_update@test.dev",
+        },
+        session.token,
+      );
+
+      expectUserNotFound(response, responseBody, nonExistentUsername);
+    });
+
+    test("Updates itself with valid input", async () => {
+      const validUserInputValues = {
+        username: "patched_standard_user",
+        email: "patched.standard.user@test.dev",
+        password: "patched_standard_user_password",
+      };
+
+      const { response, responseBody } = await patchUser(
+        standardUser.username,
+        validUserInputValues,
+        session.token,
+      );
+
+      expect(response.status).toBe(200);
+      expect(responseBody.updated_at > standardUser.updated_at).toBe(true);
+      expect(responseBody.updated_at > responseBody.created_at).toBe(true);
+
+      const userInDatabase = await getUser(validUserInputValues.username);
+
+      expect(responseBody).toEqual({
+        id: userInDatabase.id,
+        username: validUserInputValues.username,
+        features: PERMISSIONS.default.activatedUser,
+        created_at: userInDatabase.created_at,
+        updated_at: userInDatabase.updated_at,
+      });
+      expect(responseBody.password).toBeUndefined();
+      expect(userInDatabase.email).toBe(validUserInputValues.email);
+
+      const isStoredHashValid = await comparePassword(
+        validUserInputValues.password,
+        userInDatabase.password,
+      );
+      expect(isStoredHashValid).toBe(true);
+    });
+
+    test.each(DUPLICATED_FIELD_CASES)(
+      "Does not update itself with $testName",
+      async ({ existingUser, userInputValues, expectedError }) => {
+        await createDummyUser(existingUser);
 
         const { response, responseBody } = await patchUser(
-          username,
-          validUserInputValues,
+          standardUser.username,
+          userInputValues,
+          session.token,
+        );
+
+        expect(response.status).toBe(400);
+        expect(responseBody).toEqual(expectedError);
+
+        const standardUserInDatabase = await getUser(standardUser.username);
+        expect(standardUserInDatabase.email).toBe(standardUser.email);
+      },
+    );
+
+    test("Does not update another user", async () => {
+      const { response, responseBody } = await patchUser(
+        otherUser.username,
+        {
+          email: "standard_attempt_update@test.dev",
+        },
+        session.token,
+      );
+
+      expectForbiddenUpdateUser(response, responseBody);
+
+      const otherUserInDatabase = await getUser(otherUser.username);
+      expect(otherUserInDatabase.email).toBe(otherUser.email);
+    });
+  });
+
+  describe("Privileged user", () => {
+    let privilegedUser, session, otherUser;
+    const privilegedFeatures = [
+      ...PERMISSIONS.default.activatedUser,
+      "update:user:others",
+    ];
+
+    beforeEach(async () => {
+      privilegedUser = await createActivatedUser({
+        username: "privileged_user",
+        email: "privileged.user@test.dev",
+        password: "privileged_user_password",
+      });
+      await addFeatures(privilegedUser.id, ["update:user:others"]);
+      session = await createSessionForUser(privilegedUser.id);
+      otherUser = await createDummyUser({
+        username: "privileged_target",
+        email: "privileged.target@test.dev",
+        password: "privileged_target_password",
+      });
+    });
+
+    test("Receives NotFoundError when the target user does not exist", async () => {
+      expect.assertions(2);
+      const nonExistentUsername = "non_existent_user";
+
+      const { response, responseBody } = await patchUser(
+        nonExistentUsername,
+        {
+          email: "privileged_update@test.dev",
+        },
+        session.token,
+      );
+
+      expectUserNotFound(response, responseBody, nonExistentUsername);
+    });
+
+    test.each([
+      {
+        testName: "itself",
+        getTargetUser: () => privilegedUser,
+        userInputValues: {
+          username: "patched_privileged_user",
+          email: "patched.privileged.user@test.dev",
+        },
+        expectedFeatures: privilegedFeatures,
+      },
+      {
+        testName: "another user",
+        getTargetUser: () => otherUser,
+        userInputValues: {
+          username: "patched_privileged_target",
+          email: "patched.privileged.target@test.dev",
+        },
+        expectedFeatures: PERMISSIONS.default.unactivatedUser,
+      },
+    ])(
+      "Updates $testName with valid input",
+      async ({ getTargetUser, userInputValues, expectedFeatures }) => {
+        const targetUser = getTargetUser();
+
+        const { response, responseBody } = await patchUser(
+          targetUser.username,
+          userInputValues,
+          session.token,
         );
 
         expect(response.status).toBe(200);
-        expect(responseBody.updated_at > dummyUser.updated_at).toBe(true);
-        expect(responseBody.updated_at > responseBody.created_at).toBe(true);
 
-        const userInDatabase = await getUser(validUserInputValues.username);
-
+        const userInDatabase = await getUser(userInputValues.username);
         expect(responseBody).toEqual({
-          id: userInDatabase.id,
-          username: validUserInputValues.username,
-          email: validUserInputValues.email,
+          id: targetUser.id,
+          username: userInputValues.username,
+          features: expectedFeatures,
           created_at: userInDatabase.created_at,
           updated_at: userInDatabase.updated_at,
         });
         expect(responseBody.password).toBeUndefined();
-      });
+        expect(userInDatabase.email).toBe(userInputValues.email);
+      },
+    );
 
-      test("The updated password is hashed and valid", async () => {
-        const validUserInputValues = {
-          username: "patched_new_username",
-          email: "patched_new_email@test.dev",
-          password: "patched_new_password",
-        };
-
-        // First, patch the user
-        await patchUser(username, validUserInputValues);
-
-        const userInDatabase = await getUser(validUserInputValues.username);
-
-        // Confirm the hash matches the new raw password
-        const isStoredHashValid = await comparePassword(
-          validUserInputValues.password,
-          userInDatabase.password,
-        );
-        expect(isStoredHashValid).toBe(true);
-      });
-    });
-
-    describe("With empty userInputValues", () => {
-      test("Returns a ValidationError with custom message and action", async () => {
-        const { response, responseBody } = await patchUser(username, {});
-
-        expect(response.status).toBe(400);
-        expect(responseBody).toEqual({
-          name: "ValidationError",
-          status_code: 400,
-          message: "Nenhum campo foi enviado para atualização do usuário.",
-          action:
-            "Envie pelo menos um dos campos permitidos para atualização: username, email, password.",
-        });
-      });
-    });
-    describe("With duplicated field", () => {
-      test.each([
-        {
-          testName: "email",
-          existingUser: {
-            username: "existing_email_user",
-            email: "existing_email@test.dev",
-            password: "existing_email_password",
-          },
-          userInputValues: {
-            email: "EXISTING_EMAIL@TEST.DEV",
-          },
-          expectedError: {
-            name: "ValidationError",
-            status_code: 400,
-            message: "O email 'EXISTING_EMAIL@TEST.DEV' já está em uso.",
-            action:
-              "Forneça um email novo ou faça login com o email já existente.",
-          },
-        },
-        {
-          testName: "username",
-          existingUser: {
-            username: "existing_username",
-            email: "existing_username@test.dev",
-            password: "existing_username_password",
-          },
-          userInputValues: {
-            username: "EXISTING_USERNAME",
-          },
-          expectedError: {
-            name: "ValidationError",
-            status_code: 400,
-            message: "O username 'EXISTING_USERNAME' já está em uso.",
-            action:
-              "Forneça um username novo ou faça login com o username já existente.",
-          },
-        },
-      ])(
-        "The user is not updated when the $testName is duplicated",
-        async ({ existingUser, userInputValues, expectedError }) => {
-          await createDummyUser(existingUser);
-
-          const { response, responseBody } = await patchUser(
-            username,
-            userInputValues,
-          );
-
-          expect(response.status).toBe(400);
-          expect(responseBody).toEqual(expectedError);
-        },
+    test("Does not update itself with empty input", async () => {
+      expect.assertions(2);
+      const { response, responseBody } = await patchUser(
+        privilegedUser.username,
+        {},
+        session.token,
       );
+
+      expectEmptyInputValidationError(response, responseBody);
     });
 
-    describe("With invalid field", () => {
-      test("Returns a ValidationError with custom message and action", async () => {
-        const { response, responseBody } = await patchUser(username, {
+    test("Does not update another user with an invalid field", async () => {
+      expect.assertions(2);
+      const { response, responseBody } = await patchUser(
+        otherUser.username,
+        {
           role: "admin",
-        });
+        },
+        session.token,
+      );
+
+      expectInvalidFieldValidationError(response, responseBody);
+    });
+
+    test.each(DUPLICATED_FIELD_CASES)(
+      "Does not update another user with $testName",
+      async ({ existingUser, userInputValues, expectedError }) => {
+        await createDummyUser(existingUser);
+
+        const { response, responseBody } = await patchUser(
+          otherUser.username,
+          userInputValues,
+          session.token,
+        );
 
         expect(response.status).toBe(400);
-        expect(responseBody).toEqual({
-          name: "ValidationError",
-          status_code: 400,
-          message: "O campo role não é permitido para atualização do usuário.",
-          action:
-            "Envie somente campos permitidos para atualização: username, email, password.",
-        });
-      });
-    });
-  });
-
-  describe("Non-existent username", () => {
-    test("'non_existent_user' returns 404 Not Found", async () => {
-      const nonExistentUsername = "non_existent_user";
-
-      const { response, responseBody } = await patchUser(nonExistentUsername, {
-        email: "updated_email@test.dev",
-      });
-
-      expect(response.status).toBe(404);
-      expect(responseBody).toEqual({
-        name: "NotFoundError",
-        status_code: 404,
-        message: `Usuário ${nonExistentUsername} não encontrado.`,
-        action: `Verifique se o usuário ${nonExistentUsername} existe.`,
-      });
-    });
+        expect(responseBody).toEqual(expectedError);
+      },
+    );
   });
 });

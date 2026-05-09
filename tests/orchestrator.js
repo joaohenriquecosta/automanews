@@ -1,9 +1,12 @@
 import retry from "async-retry";
 import { query } from "infra/database";
 import { createUser, getUserByUsername } from "models/user";
+import { getOrigin } from "infra/webserver.js";
+import { randomBytes } from "node:crypto";
+import { SESSION_LIFETIME_MS } from "models/session.js";
+import { PERMISSIONS } from "models/authorization.js";
 
-/** Use 127.0.0.1 so probes match `wait-for-next-dev.js` and avoid IPv6/localhost quirks on Linux. */
-export const testBaseUrl = process.env.TEST_BASE_URL ?? "http://127.0.0.1:3000";
+const testBaseUrl = getOrigin();
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
 export {
@@ -14,9 +17,16 @@ export {
   serializePublicUser,
   postUser,
   postSession,
+  patchActivationToken,
   getUser,
   deleteAllEmails,
   getLastEmail,
+  getActivationTokensByUserId,
+  getValidActivationTokenByToken,
+  expireActivationToken,
+  activateUser,
+  createSessionForUser,
+  testBaseUrl,
 };
 
 function isJsonResponse(response) {
@@ -40,10 +50,10 @@ async function waitForAllServices() {
     });
 
     async function assertStatusJsonOk() {
-      const statusRes = await fetch(`${testBaseUrl}/api/v1/status`);
-      if (statusRes.status !== 200 || !isJsonResponse(statusRes)) {
+      const usersIndexRes = await fetch(`${testBaseUrl}/api/v1/users`);
+      if (usersIndexRes.status !== 405 || !isJsonResponse(usersIndexRes)) {
         throw new Error(
-          `status: want 200+json, got ${statusRes.status} content-type=${statusRes.headers.get("content-type")}`,
+          `users index: want 405+json, got ${usersIndexRes.status} content-type=${usersIndexRes.headers.get("content-type")}`,
         );
       }
     }
@@ -99,6 +109,45 @@ async function createDummyUser(overrides = {}) {
   return serializePublicUser(dummyUser);
 }
 
+async function activateUser(userId) {
+  const result = await query({
+    text: `
+      UPDATE
+        users
+      SET
+        features = $2,
+        updated_at = timezone('utc', now())
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [userId, PERMISSIONS.default.activatedUser],
+  });
+
+  return serializePublicUser(result.rows[0]);
+}
+
+async function createSessionForUser(userId) {
+  const result = await query({
+    text: `
+      INSERT INTO
+        sessions (token, user_id, expires_at)
+      VALUES
+        ($1, $2, $3)
+      RETURNING
+        *
+    ;`,
+    values: [
+      randomBytes(48).toString("hex"),
+      userId,
+      new Date(Date.now() + SESSION_LIFETIME_MS),
+    ],
+  });
+
+  return result.rows[0];
+}
+
 async function postUser(userInput) {
   const response = await fetch(`${testBaseUrl}/api/v1/users`, {
     method: "POST",
@@ -133,6 +182,19 @@ async function postSession(credentials) {
   };
 }
 
+async function patchActivationToken(token) {
+  const response = await fetch(`${testBaseUrl}/api/v1/activations/${token}`, {
+    method: "PATCH",
+  });
+
+  const responseBody = await response.json();
+
+  return {
+    response,
+    responseBody,
+  };
+}
+
 async function getUser(username) {
   const user = await getUserByUsername(username);
   return serializeUser(user);
@@ -151,6 +213,10 @@ async function getLastEmail() {
   const emails = await response.json();
   const lastEmail = emails.pop();
 
+  if (!lastEmail) {
+    return null;
+  }
+
   const emailTextResponse = await fetch(
     `${emailHttpUrl}/messages/${lastEmail.id}.plain`,
   );
@@ -160,4 +226,59 @@ async function getLastEmail() {
   lastEmail.text = lastEmailTextBody;
 
   return lastEmail;
+}
+
+async function getActivationTokensByUserId(userId) {
+  const activationTokenResult = await query({
+    text: `
+      SELECT
+        *
+      FROM
+        user_activation_tokens
+      WHERE
+        user_id = $1
+      ORDER BY
+        created_at DESC
+    ;`,
+    values: [userId],
+  });
+  return activationTokenResult.rows;
+}
+
+async function getValidActivationTokenByToken(token) {
+  const activationTokenResult = await query({
+    text: `
+      SELECT
+        *
+      FROM
+        user_activation_tokens
+      WHERE
+        token = $1
+        AND used_at IS NULL
+        AND expires_at > timezone('utc', now())
+      LIMIT
+        1
+    ;`,
+    values: [token],
+  });
+
+  return activationTokenResult.rows[0] ?? null;
+}
+
+async function expireActivationToken(activationTokenId) {
+  const result = await query({
+    text: `
+      UPDATE
+        user_activation_tokens
+      SET
+        expires_at = '2000-01-01T00:00:00.000Z'
+      WHERE
+        id = $1
+      RETURNING
+        *
+    ;`,
+    values: [activationTokenId],
+  });
+
+  return result.rows[0];
 }
