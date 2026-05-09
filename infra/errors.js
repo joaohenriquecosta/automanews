@@ -4,7 +4,6 @@ function serializeError(error, extra = {}) {
     status_code: error.statusCode,
     message: error.message,
     action: error.action,
-    context: error.context,
     ...extra,
   };
 }
